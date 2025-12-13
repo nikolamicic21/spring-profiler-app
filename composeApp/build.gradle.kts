@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -39,6 +40,10 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
         }
+        jvmTest.dependencies {
+            implementation(compose.desktop.uiTestJUnit4)
+            implementation(compose.desktop.currentOs)
+        }
     }
 }
 
@@ -51,6 +56,31 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.example.spring_profiler_app"
             packageVersion = "1.0.0"
+        }
+    }
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                // Exclude generated code
+                classes("*ComposableSingletons*")
+                classes("*.BuildConfig")
+                classes("*\$\$serializer")
+
+                // Exclude main function
+                packages("com.example.spring_profiler_app.MainKt")
+
+                // Exclude Compose generated code
+                classes("*\$\$ExternalSyntheticLambda*")
+            }
+        }
+
+        verify {
+            rule {
+                minBound(70)
+            }
         }
     }
 }

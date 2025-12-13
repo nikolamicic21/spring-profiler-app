@@ -1,3 +1,5 @@
+# Spring Profiler Application
+
 This is a Kotlin Multiplatform project targeting Desktop (JVM).
 
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
@@ -22,6 +24,48 @@ in your IDE’s toolbar or run it directly from the terminal:
   ```shell
   .\gradlew.bat :composeApp:run
   ```
+
+### Running Tests
+
+To run all tests:
+
+```shell
+./gradlew :composeApp:jvmTest
+```
+
+### Code Coverage
+
+This project uses [Kover](https://github.com/Kotlin/kotlinx-kover) for code coverage reporting.
+
+#### Generate HTML Coverage Report
+
+```shell
+./gradlew :composeApp:koverHtmlReport
+```
+
+The HTML report will be generated at: `composeApp/build/reports/kover/html/index.html`
+
+#### Generate XML Coverage Report
+
+```shell
+./gradlew :composeApp:koverXmlReport
+```
+
+The XML report will be generated at: `composeApp/build/reports/kover/report.xml`
+
+#### Verify Coverage Thresholds
+
+```shell
+./gradlew :composeApp:koverVerify
+```
+
+This will verify that the code coverage meets the minimum threshold (currently set to 70%).
+
+#### Generate All Reports
+
+```shell
+./gradlew clean :composeApp:jvmTest :composeApp:koverHtmlReport :composeApp:koverXmlReport
+```
 
 ---
 
