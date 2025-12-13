@@ -18,7 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.client.client
+import com.example.spring_profiler_app.Client
 import com.example.spring_profiler_app.client.safeRequest
 import com.example.spring_profiler_app.data.Server
 import com.example.spring_profiler_app.data.ServerState
@@ -36,6 +36,7 @@ fun AddServerForm(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
+        val client = Client.current
         var urlText by rememberSaveable { mutableStateOf("") }
         var isFormError by rememberSaveable { mutableStateOf(false) }
 

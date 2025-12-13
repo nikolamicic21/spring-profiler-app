@@ -10,14 +10,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.ActuatorRepository
 import com.example.spring_profiler_app.data.Server
 import com.example.spring_profiler_app.data.ServerState
 import com.example.spring_profiler_app.data.refreshHealthState
@@ -32,8 +30,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-val Repository = compositionLocalOf<ActuatorRepository> { error("Undefined repository") }
-
 @Composable
 fun App() {
     MaterialTheme {
@@ -41,6 +37,7 @@ fun App() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
+            val repository = Repository.current
             val servers = remember { mutableStateMapOf<Server, ServerState>() }
             val currentServerKey = remember { mutableStateOf<Server?>(null) }
             val scope = rememberCoroutineScope()
@@ -50,13 +47,13 @@ fun App() {
 
             val refreshHealthCallback: suspend () -> Unit = {
                 currentServerKey.value?.let { server ->
-                    servers.refreshHealthState(server, repo)
+                    servers.refreshHealthState(server, repository)
                 }
             }
 
             val refreshMetricsCallback: suspend () -> Unit = {
                 currentServerKey.value?.let { server ->
-                    servers.refreshMetricsState(server, repo)
+                    servers.refreshMetricsState(server, repository)
                 }
             }
 
@@ -73,7 +70,7 @@ fun App() {
                         onAddServerClick = { currentServerKey.value = null },
                         onServerSelect = { server -> currentServerKey.value = server },
                         onRefreshServer = { server ->
-                            ioScope.launch { servers.refreshState(server, repo) }
+                            ioScope.launch { servers.refreshState(server, repository) }
                         },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -96,7 +93,7 @@ fun App() {
                             servers = servers,
                             onServerAdded = { newServer ->
                                 ioScope.launch {
-                                    servers.refreshState(newServer, repo)
+                                    servers.refreshState(newServer, repository)
                                 }
                             },
                             ioScope = ioScope,
