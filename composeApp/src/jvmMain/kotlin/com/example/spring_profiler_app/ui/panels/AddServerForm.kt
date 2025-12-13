@@ -1,0 +1,94 @@
+package com.example.spring_profiler_app.ui.panels
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.spring_profiler_app.client.client
+import com.example.spring_profiler_app.client.safeRequest
+import com.example.spring_profiler_app.data.ApiUiState
+import com.example.spring_profiler_app.data.Server
+import com.example.spring_profiler_app.data.ServerState
+import io.ktor.client.request.url
+import io.ktor.http.Url
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+@Composable
+fun AddServerForm(
+    servers: MutableMap<Server, ServerState>,
+    onServerAdded: (Server) -> Unit,
+    ioScope: CoroutineScope,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        var urlText by rememberSaveable { mutableStateOf("") }
+        var isFormError by rememberSaveable { mutableStateOf(false) }
+
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = urlText,
+                onValueChange = { urlText = it },
+                label = { Text("Server's actuator endpoint (URL)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            if (isFormError) {
+                Text(text = "There's been an error connecting to the server's actuator endpoint. Please check the URL!")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    ioScope.launch {
+                        try {
+                            val serverUrl = Url(urlText)
+                            client.safeRequest<Unit> {
+                                url(serverUrl)
+                            }
+
+                            val newServer = Server(serverUrl)
+                            if (!servers.keys.contains(newServer)) {
+                                servers[newServer] = ServerState(
+                                    newServer,
+                                    ApiUiState.Loading,
+                                    ApiUiState.Loading,
+                                    ApiUiState.Loading,
+                                    ApiUiState.Loading
+                                )
+                                onServerAdded(newServer)
+                            }
+                            isFormError = false
+                        } catch (_: Exception) {
+                            isFormError = true
+                        }
+                    }
+                },
+                enabled = urlText.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Connect")
+            }
+        }
+    }
+}
