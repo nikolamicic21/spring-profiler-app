@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -39,6 +40,7 @@ fun ServerListPanel(
     onAddServerClick: () -> Unit,
     onServerSelect: (Server) -> Unit,
     onRefreshServer: (Server) -> Unit,
+    onDeleteServer: (Server) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxHeight()) {
@@ -78,7 +80,8 @@ fun ServerListPanel(
                         server = server,
                         isSelected = currentServerKey == server,
                         onSelect = { onServerSelect(server) },
-                        onRefresh = { onRefreshServer(server) }
+                        onRefresh = { onRefreshServer(server) },
+                        onDelete = { onDeleteServer(server) },
                     )
                 }
             }
@@ -95,7 +98,8 @@ private fun ServerListItem(
     server: Server,
     isSelected: Boolean,
     onSelect: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     val color = if (isSelected) {
         MaterialTheme.colorScheme.primary
@@ -105,7 +109,7 @@ private fun ServerListItem(
 
     Box(contentAlignment = Alignment.CenterStart) {
         Row(modifier = Modifier.padding(8.dp).fillMaxWidth()) {
-            Box(modifier = Modifier.padding(2.dp).fillMaxWidth(0.7f)) {
+            Box(modifier = Modifier.padding(2.dp).weight(0.7f)) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = color),
                     modifier = Modifier.clickable(onClick = onSelect)
@@ -116,13 +120,25 @@ private fun ServerListItem(
                 }
             }
             Box(
-                modifier = Modifier.padding(2.dp).fillMaxWidth(),
+                modifier = Modifier.padding(2.dp).weight(0.15f),
                 contentAlignment = Alignment.Center
             ) {
                 IconButton(onClick = onRefresh) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = "Refresh data",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier.padding(2.dp).weight(0.15f),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete server",
                         modifier = Modifier.size(24.dp)
                     )
                 }

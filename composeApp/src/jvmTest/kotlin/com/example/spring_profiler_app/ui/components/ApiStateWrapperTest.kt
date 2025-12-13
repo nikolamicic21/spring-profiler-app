@@ -18,7 +18,7 @@ class ApiStateWrapperTest {
 
         // When
         setContent {
-            ApiStateWrapper(state = loadingState) { data ->
+            UIStateWrapper(state = loadingState) { data ->
                 Text(text = data)
             }
         }
@@ -35,7 +35,7 @@ class ApiStateWrapperTest {
 
         // When
         setContent {
-            ApiStateWrapper(state = errorState) { data ->
+            UIStateWrapper(state = errorState) { data ->
                 Text(text = data)
             }
         }
@@ -52,7 +52,7 @@ class ApiStateWrapperTest {
 
         // When
         setContent {
-            ApiStateWrapper(state = successState) { data ->
+            UIStateWrapper(state = successState) { data ->
                 Text(text = data)
             }
         }
@@ -71,7 +71,7 @@ class ApiStateWrapperTest {
 
         // When
         setContent {
-            ApiStateWrapper(state = successState) { data ->
+            UIStateWrapper(state = successState) { data ->
                 Text(text = "${data.title}: ${data.value}")
             }
         }
@@ -87,7 +87,7 @@ class ApiStateWrapperTest {
 
         // When
         setContent {
-            ApiStateWrapper(state = loadingState) { _ ->
+            UIStateWrapper(state = loadingState) { _ ->
                 Text(text = "This should not be visible")
             }
         }
@@ -104,7 +104,7 @@ class ApiStateWrapperTest {
 
         // When
         setContent {
-            ApiStateWrapper(state = errorState) { _ ->
+            UIStateWrapper(state = errorState) { _ ->
                 Text(text = "This should not be visible")
             }
         }

@@ -28,7 +28,8 @@ class ServerListPanelTest {
                 currentServerKey = null,
                 onAddServerClick = {},
                 onServerSelect = {},
-                onRefreshServer = {}
+                onRefreshServer = {},
+                onDeleteServer = {},
             )
         }
 
@@ -48,7 +49,8 @@ class ServerListPanelTest {
                 currentServerKey = null,
                 onAddServerClick = {},
                 onServerSelect = {},
-                onRefreshServer = {}
+                onRefreshServer = {},
+                onDeleteServer = {},
             )
         }
 
@@ -69,7 +71,8 @@ class ServerListPanelTest {
                 currentServerKey = null,
                 onAddServerClick = { addServerClicked = true },
                 onServerSelect = {},
-                onRefreshServer = {}
+                onRefreshServer = {},
+                onDeleteServer = {},
             )
         }
 
@@ -98,7 +101,8 @@ class ServerListPanelTest {
                 currentServerKey = null,
                 onAddServerClick = {},
                 onServerSelect = {},
-                onRefreshServer = {}
+                onRefreshServer = {},
+                onDeleteServer = {},
             )
         }
 
@@ -137,7 +141,8 @@ class ServerListPanelTest {
                 currentServerKey = null,
                 onAddServerClick = {},
                 onServerSelect = {},
-                onRefreshServer = {}
+                onRefreshServer = {},
+                onDeleteServer = {},
             )
         }
 
@@ -167,7 +172,8 @@ class ServerListPanelTest {
                 currentServerKey = null,
                 onAddServerClick = {},
                 onServerSelect = { selectedServer = it },
-                onRefreshServer = {}
+                onRefreshServer = {},
+                onDeleteServer = {},
             )
         }
 

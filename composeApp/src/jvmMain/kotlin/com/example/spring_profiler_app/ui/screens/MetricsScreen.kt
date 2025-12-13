@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.dp
 import com.example.spring_profiler_app.data.MetricsResponse
 import com.example.spring_profiler_app.data.UIState
 import com.example.spring_profiler_app.data.formatNumberWithoutGrouping
-import com.example.spring_profiler_app.ui.components.ApiStateWrapper
 import com.example.spring_profiler_app.ui.components.ScrollableContent
+import com.example.spring_profiler_app.ui.components.UIStateWrapper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.seconds
@@ -35,7 +35,7 @@ fun MetricsScreen(
         }
     }
 
-    ApiStateWrapper(
+    UIStateWrapper(
         state = metricsState,
     ) { data ->
         MetricsContent(data)

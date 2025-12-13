@@ -49,6 +49,7 @@ fun AddServerForm(
                 value = urlText,
                 onValueChange = { urlText = it },
                 label = { Text("Server's actuator endpoint (URL)") },
+                placeholder = { Text("http://localhost:8080/actuator") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -69,7 +70,7 @@ fun AddServerForm(
                             }
 
                             val newServer = Server(serverUrl)
-                            if (!servers.keys.contains(newServer)) {
+                            if (!servers.keys.any { it.url.host == newServer.url.host && it.url.port == newServer.url.port }) {
                                 servers[newServer] = ServerState(
                                     newServer,
                                     UIState.Loading,

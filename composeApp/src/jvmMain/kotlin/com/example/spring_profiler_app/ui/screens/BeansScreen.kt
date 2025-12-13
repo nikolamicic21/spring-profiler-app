@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,12 +33,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.spring_profiler_app.data.BeansResponse
 import com.example.spring_profiler_app.data.UIState
-import com.example.spring_profiler_app.ui.components.ApiStateWrapper
+import com.example.spring_profiler_app.ui.components.UIStateWrapper
 import kotlinx.coroutines.launch
 
 @Composable
 fun BeansScreen(beansState: UIState<BeansResponse>) {
-    ApiStateWrapper(
+    UIStateWrapper(
         state = beansState,
     ) { data ->
         BeansContent(data)
@@ -120,7 +121,9 @@ private fun BeanCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(10.dp)) {
-            Text(text = "Bean name: $beanName")
+            SelectionContainer {
+                Text(text = "Bean name: $beanName")
+            }
         }
         Row(modifier = Modifier.padding(10.dp)) {
             Text(text = "Scope: $scope")
@@ -137,12 +140,14 @@ private fun BeanCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            modifier = Modifier.clickable { onDependencyClick(dependency) },
-                            text = dependency,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        SelectionContainer {
+                            Text(
+                                modifier = Modifier.clickable { onDependencyClick(dependency) },
+                                text = dependency,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             }

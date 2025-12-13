@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.spring_profiler_app.data.HealthResponse
 import com.example.spring_profiler_app.data.UIState
-import com.example.spring_profiler_app.ui.components.ApiStateWrapper
+import com.example.spring_profiler_app.ui.components.UIStateWrapper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.seconds
@@ -31,7 +31,7 @@ fun HealthScreen(
         }
     }
 
-    ApiStateWrapper(
+    UIStateWrapper(
         state = healthState,
     ) { data ->
         HealthContent(data)

@@ -72,6 +72,12 @@ fun App() {
                         onRefreshServer = { server ->
                             ioScope.launch { servers.refreshState(server, repository) }
                         },
+                        onDeleteServer = { server ->
+                            if (currentServerKey.value == server) {
+                                currentServerKey.value = null
+                            }
+                            servers.remove(server)
+                        },
                         modifier = Modifier.fillMaxSize()
                     )
                 }

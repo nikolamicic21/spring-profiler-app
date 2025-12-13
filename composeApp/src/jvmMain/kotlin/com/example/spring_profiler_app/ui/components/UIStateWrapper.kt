@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.example.spring_profiler_app.data.UIState
 
 @Composable
-fun <T> ApiStateWrapper(
+fun <T> UIStateWrapper(
     state: UIState<T>,
     content: @Composable (T) -> Unit,
 ) {
