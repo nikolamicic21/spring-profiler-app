@@ -1,7 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
-val ktorVersion = "3.3.3"
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
@@ -25,16 +23,16 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation("io.ktor:ktor-client-core:${ktorVersion}")
-            implementation("io.ktor:ktor-client-cio:${ktorVersion}")
-            implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.contentNegotiation)
+            implementation(libs.ktor.serialization.kotlinxJson)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-            implementation("io.mockk:mockk:1.13.13")
-            implementation("io.ktor:ktor-client-mock:${ktorVersion}")
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.mockk)
+            implementation(libs.ktor.client.mock)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
