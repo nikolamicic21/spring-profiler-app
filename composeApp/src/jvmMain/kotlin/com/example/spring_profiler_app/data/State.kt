@@ -29,9 +29,8 @@ private suspend fun <T> SnapshotStateMap<Server, ServerState>.refreshEndpoint(
 ) {
     val stateMap = this
     try {
-        val response = withContext(Dispatchers.IO) {
-            fetchData()
-        }
+        val response = fetchData()
+
         withContext(Dispatchers.Main.immediate) {
             val currentState = stateMap[server] ?: return@withContext
             stateMap[server] = currentState.updateState(ApiUiState.Success(response))
