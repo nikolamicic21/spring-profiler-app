@@ -1,17 +1,11 @@
 package com.example.spring_profiler_app.data
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.example.spring_profiler_app.repo
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 sealed class ApiUiState<out T> {
     data object Loading : ApiUiState<Nothing>()
@@ -27,126 +21,80 @@ data class ServerState(
     val metrics: ApiUiState<MetricsResponse>,
 )
 
-class ThreadSafeState<T>(initialValue: T) {
-    private var _state by mutableStateOf(initialValue)
-    val state: T get() = _state
-
-    private val mutex = Mutex()
-
-    suspend fun modify(block: (T) -> T) {
-        mutex.withLock {
-            _state = block(_state)
-        }
-    }
-}
-
-val RecoveryScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
-
-fun getCoroutineExceptionHandler(
+private suspend fun <T> SnapshotStateMap<Server, ServerState>.refreshEndpoint(
     server: Server,
-    state: SnapshotStateMap<Server, ThreadSafeState<ServerState>>,
-    actuatorEndpoints: ActuatorEndpoints
-) =
-    CoroutineExceptionHandler { _, exception ->
-        RecoveryScope.launch {
-            state[server]?.modify { state ->
-                when (actuatorEndpoints) {
-                    ActuatorEndpoints.BEANS -> {
-                        state.copy(
-                            beans = ApiUiState.Error(
-                                getFriendlyMessage(
-                                    actuatorEndpoints, exception
-                                )
-                            )
-                        )
-                    }
-
-                    ActuatorEndpoints.HEALTH -> {
-                        state.copy(
-                            health = ApiUiState.Error(
-                                getFriendlyMessage(
-                                    actuatorEndpoints, exception
-                                )
-                            )
-                        )
-                    }
-
-                    ActuatorEndpoints.CONFIG_PROPS -> {
-                        state.copy(
-                            configProps = ApiUiState.Error(
-                                getFriendlyMessage(
-                                    actuatorEndpoints, exception
-                                )
-                            )
-                        )
-                    }
-
-                    ActuatorEndpoints.METRICS -> {
-                        state.copy(
-                            metrics = ApiUiState.Error(
-                                getFriendlyMessage(
-                                    actuatorEndpoints, exception
-                                )
-                            )
-                        )
-                    }
-                }
-            }
+    endpoint: ActuatorEndpoints,
+    fetchData: suspend () -> T,
+    updateState: ServerState.(ApiUiState<T>) -> ServerState
+) {
+    val stateMap = this
+    try {
+        val response = withContext(Dispatchers.IO) {
+            fetchData()
         }
-    }
-
-fun SnapshotStateMap<Server, ThreadSafeState<ServerState>>.refreshState(server: Server) {
-    val state = this
-    state.refreshBeansState(server)
-    state.refreshHealthState(server)
-    state.refreshConfigPropsState(server)
-    state.refreshMetricsState(server)
-}
-
-fun SnapshotStateMap<Server, ThreadSafeState<ServerState>>.refreshBeansState(server: Server) {
-    val state = this
-    RecoveryScope.launch(getCoroutineExceptionHandler(server, state, ActuatorEndpoints.BEANS)) {
-        val beansResponse = repo.getBeans(server)
-        state[server]?.modify {
-            it.copy(
-                beans = ApiUiState.Success(beansResponse)
-            )
+        withContext(Dispatchers.Main.immediate) {
+            val currentState = stateMap[server] ?: return@withContext
+            stateMap[server] = currentState.updateState(ApiUiState.Success(response))
+        }
+    } catch (exception: Exception) {
+        withContext(Dispatchers.Main.immediate) {
+            val currentState = stateMap[server] ?: return@withContext
+            stateMap[server] = currentState.updateState(ApiUiState.Error(getFriendlyMessage(endpoint, exception)))
         }
     }
 }
 
-fun SnapshotStateMap<Server, ThreadSafeState<ServerState>>.refreshHealthState(server: Server) {
-    val state = this
-    RecoveryScope.launch(getCoroutineExceptionHandler(server, state, ActuatorEndpoints.HEALTH)) {
-        val healthResponse = repo.getHealth(server)
-        state[server]?.modify {
-            it.copy(
-                health = ApiUiState.Success(healthResponse)
-            )
-        }
+suspend fun SnapshotStateMap<Server, ServerState>.refreshState(
+    server: Server
+) {
+    coroutineScope {
+        launch { refreshBeansState(server) }
+        launch { refreshHealthState(server) }
+        launch { refreshConfigPropsState(server) }
+        launch { refreshMetricsState(server) }
     }
 }
 
-fun SnapshotStateMap<Server, ThreadSafeState<ServerState>>.refreshConfigPropsState(server: Server) {
-    val state = this
-    RecoveryScope.launch(getCoroutineExceptionHandler(server, state, ActuatorEndpoints.CONFIG_PROPS)) {
-        val configPropsResponse = repo.getConfigProps(server)
-        state[server]?.modify {
-            it.copy(
-                configProps = ApiUiState.Success(configPropsResponse)
-            )
-        }
-    }
+suspend fun SnapshotStateMap<Server, ServerState>.refreshBeansState(
+    server: Server
+) {
+    refreshEndpoint(
+        server = server,
+        endpoint = ActuatorEndpoints.BEANS,
+        fetchData = { repo.getBeans(server) },
+        updateState = { copy(beans = it) }
+    )
 }
 
-fun SnapshotStateMap<Server, ThreadSafeState<ServerState>>.refreshMetricsState(server: Server) {
-    val state = this
-    RecoveryScope.launch(getCoroutineExceptionHandler(server, state, ActuatorEndpoints.METRICS)) {
-        val metricsResponse = repo.getMetrics(server)
-        state[server]?.modify {
-            it.copy(
-                metrics = ApiUiState.Success(metricsResponse)
-            )
-        }
-    }
+suspend fun SnapshotStateMap<Server, ServerState>.refreshHealthState(
+    server: Server
+) {
+    refreshEndpoint(
+        server = server,
+        endpoint = ActuatorEndpoints.HEALTH,
+        fetchData = { repo.getHealth(server) },
+        updateState = { copy(health = it) }
+    )
+}
+
+suspend fun SnapshotStateMap<Server, ServerState>.refreshConfigPropsState(
+    server: Server
+) {
+    refreshEndpoint(
+        server = server,
+        endpoint = ActuatorEndpoints.CONFIG_PROPS,
+        fetchData = { repo.getConfigProps(server) },
+        updateState = { copy(configProps = it) }
+    )
+}
+
+suspend fun SnapshotStateMap<Server, ServerState>.refreshMetricsState(
+    server: Server
+) {
+    refreshEndpoint(
+        server = server,
+        endpoint = ActuatorEndpoints.METRICS,
+        fetchData = { repo.getMetrics(server) },
+        updateState = { copy(metrics = it) }
+    )
 }

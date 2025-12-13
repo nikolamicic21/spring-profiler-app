@@ -65,7 +65,6 @@ import com.example.spring_profiler_app.data.HealthResponse
 import com.example.spring_profiler_app.data.MetricsResponse
 import com.example.spring_profiler_app.data.Server
 import com.example.spring_profiler_app.data.ServerState
-import com.example.spring_profiler_app.data.ThreadSafeState
 import com.example.spring_profiler_app.data.flattenConfigPropsObject
 import com.example.spring_profiler_app.data.formatNumberWithoutGrouping
 import com.example.spring_profiler_app.data.refreshHealthState
@@ -73,6 +72,7 @@ import com.example.spring_profiler_app.data.refreshMetricsState
 import com.example.spring_profiler_app.data.refreshState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -86,26 +86,22 @@ val Repository = compositionLocalOf<ActuatorRepository> { error("Undefined repos
 @Preview
 fun App() {
     MaterialTheme {
-        val servers = remember { mutableStateMapOf<Server, ThreadSafeState<ServerState>>() }
-        val currentServer = remember { mutableStateOf<ThreadSafeState<ServerState>?>(null) }
+        val servers = remember { mutableStateMapOf<Server, ServerState>() }
+        val currentServerKey = remember { mutableStateOf<Server?>(null) }
         val scope = rememberCoroutineScope()
-        val customScope = remember(scope) {
-            CoroutineScope(scope.coroutineContext + Dispatchers.Default + SupervisorJob())
+        val ioScope = remember(scope) {
+            CoroutineScope(scope.coroutineContext + Dispatchers.IO + SupervisorJob(scope.coroutineContext[Job]))
         }
 
         val refreshHealthCallback: suspend () -> Unit = {
-            customScope.launch {
-                if (currentServer.value != null) {
-                    servers.refreshHealthState(currentServer.value!!.state.server)
-                }
+            currentServerKey.value?.let { server ->
+                servers.refreshHealthState(server)
             }
         }
 
         val refreshMetricsCallback: suspend () -> Unit = {
-            customScope.launch {
-                if (currentServer.value != null) {
-                    servers.refreshMetricsState(currentServer.value!!.state.server)
-                }
+            currentServerKey.value?.let { server ->
+                servers.refreshMetricsState(server)
             }
         }
 
@@ -131,14 +127,14 @@ fun App() {
                                         Modifier.padding(10.dp).fillMaxWidth(), contentAlignment = Alignment.Center
                                     ) {
                                         Button(onClick = {
-                                            currentServer.value = null
+                                            currentServerKey.value = null
                                         }) {
                                             Text("Add a new server")
                                         }
                                     }
                                     for (server in servers.keys.toList()) {
                                         val color =
-                                            if (currentServer.value?.state?.server == servers[server]?.state?.server) {
+                                            if (currentServerKey.value == server) {
                                                 MaterialTheme.colorScheme.primary
                                             } else {
                                                 MaterialTheme.colorScheme.surfaceVariant
@@ -151,7 +147,7 @@ fun App() {
                                                     Card(
                                                         colors = CardDefaults.cardColors(containerColor = color),
                                                         modifier = Modifier.clickable {
-                                                            currentServer.value = servers[server]
+                                                            currentServerKey.value = server
                                                         }) {
                                                         Column(modifier = Modifier.padding(10.dp).fillMaxWidth()) {
                                                             Text(text = "${server.host}:${server.port}")
@@ -163,7 +159,7 @@ fun App() {
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     IconButton(onClick = {
-                                                        customScope.launch {
+                                                        ioScope.launch {
                                                             servers.refreshState(server)
                                                         }
                                                     }) {
@@ -189,7 +185,8 @@ fun App() {
                 Box {
                     Row {
                         Column {
-                            when (currentServer.value) {
+                            val currentServerState = currentServerKey.value?.let { servers[it] }
+                            when (currentServerState) {
                                 null -> Box {
                                     var host by rememberSaveable { mutableStateOf("") }
                                     var port by rememberSaveable { mutableStateOf("") }
@@ -218,16 +215,14 @@ fun App() {
                                             onClick = {
                                                 val newServer = Server(host, port.toInt())
                                                 if (!servers.keys.contains(newServer)) {
-                                                    customScope.launch {
-                                                        servers[newServer] = ThreadSafeState(
-                                                            ServerState(
-                                                                newServer,
-                                                                ApiUiState.Loading,
-                                                                ApiUiState.Loading,
-                                                                ApiUiState.Loading,
-                                                                ApiUiState.Loading
-                                                            )
-                                                        )
+                                                    servers[newServer] = ServerState(
+                                                        newServer,
+                                                        ApiUiState.Loading,
+                                                        ApiUiState.Loading,
+                                                        ApiUiState.Loading,
+                                                        ApiUiState.Loading
+                                                    )
+                                                    ioScope.launch {
                                                         servers.refreshState(newServer)
                                                     }
                                                 }
@@ -265,11 +260,11 @@ fun App() {
                                         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
                                             ContentViewSwitcher(
                                                 actuatorEndpoints.value,
-                                                currentServer.value!!.state.beans,
-                                                currentServer.value!!.state.health,
+                                                currentServerState.beans,
+                                                currentServerState.health,
                                                 refreshHealthCallback,
-                                                currentServer.value!!.state.configProps,
-                                                currentServer.value!!.state.metrics,
+                                                currentServerState.configProps,
+                                                currentServerState.metrics,
                                                 refreshMetricsCallback,
                                             )
                                         }
