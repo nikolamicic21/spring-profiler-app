@@ -25,6 +25,31 @@ in your IDE’s toolbar or run it directly from the terminal:
   .\gradlew.bat :composeApp:run
   ```
 
+### Screens
+
+#### Beans screen
+
+Beans screen targets _/actuator/beans_ endpoint and renders Spring beans in all active contexts. Bean's dependencies are
+clickable and navigate to the relevant
+element.
+
+#### Health screen
+
+Health screen targets _/actuator/health_ endpoint. Data is polled every 5 seconds. Polling is done only if the screen is
+rendered into the view.
+
+#### Configuration properties screen
+
+Configuration properties screen targets _/actuator/configprops_ endpoint and displays available configuration properties
+in the server application.
+
+#### Metrics screen
+
+Metrics screen targets _/actuator/metrics_ and _/actuator/metrics/{requiredMetricName}_ endpoints. Metrics data is
+polled every 3 seconds (1 + N calls, where N calls run concurrently) to provide near real-time performance insight.
+Polling
+is done only if the screen is rendered into the view.
+
 ### Running Tests
 
 To run all tests:
@@ -66,7 +91,3 @@ This will verify that the code coverage meets the minimum threshold (currently s
 ```shell
 ./gradlew clean :composeApp:jvmTest :composeApp:koverHtmlReport :composeApp:koverXmlReport
 ```
-
----
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
