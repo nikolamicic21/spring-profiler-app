@@ -19,19 +19,19 @@ class ActuatorRepositoryImpl(val client: HttpClient) : ActuatorRepository {
     override suspend fun getBeans(
         server: Server
     ): BeansResponse =
-        client.safeRequest { url("${server.url}/beans") }
+        safeRequest<BeansResponse>(client) { url("${server.url}/beans") }
 
     override suspend fun getHealth(server: Server): HealthResponse =
-        client.safeRequest { url("${server.url}/health") }
+        safeRequest<HealthResponse>(client) { url("${server.url}/health") }
 
     override suspend fun getConfigProps(server: Server): ConfigPropsResponse =
-        client.safeRequest { url("${server.url}/configprops") }
+        safeRequest<ConfigPropsResponse>(client) { url("${server.url}/configprops") }
 
     override suspend fun getMetrics(server: Server): MetricsResponse = coroutineScope {
-        val metricNames = client.safeRequest<MetricNamesResult> { url("${server.url}/metrics") }
+        val metricNames = safeRequest<MetricNamesResult>(client) { url("${server.url}/metrics") }
         val metrics = metricNames.names.map {
             async {
-                client.safeRequest<MetricsResult> { url("${server.url}/metrics/${it}") }
+                safeRequest<MetricsResult>(client) { url("${server.url}/metrics/${it}") }
             }
         }.awaitAll()
 

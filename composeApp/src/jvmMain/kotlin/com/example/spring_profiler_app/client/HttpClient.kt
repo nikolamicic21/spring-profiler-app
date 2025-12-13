@@ -10,10 +10,11 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.isSuccess
 import io.ktor.serialization.JsonConvertException
 
-suspend inline fun <reified T> HttpClient.safeRequest(
+suspend inline fun <reified T> safeRequest(
+    client: HttpClient,
     block: HttpRequestBuilder.() -> Unit
 ): T {
-    val response: HttpResponse = request(block)
+    val response: HttpResponse = client.request(block)
 
     return try {
         if (response.status.isSuccess()) {

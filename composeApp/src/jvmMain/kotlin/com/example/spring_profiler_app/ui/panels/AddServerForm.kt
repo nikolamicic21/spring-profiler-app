@@ -64,7 +64,7 @@ fun AddServerForm(
                     ioScope.launch {
                         try {
                             val serverUrl = Url(urlText)
-                            client.safeRequest<Unit> {
+                            safeRequest<Unit>(client) {
                                 url(serverUrl)
                             }
 
