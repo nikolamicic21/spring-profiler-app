@@ -6,28 +6,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.ApiUiState
+import com.example.spring_profiler_app.data.UIState
 
 @Composable
 fun <T> ApiStateWrapper(
-    state: ApiUiState<T>,
+    state: UIState<T>,
     content: @Composable (T) -> Unit,
 ) {
     Box {
         when (state) {
-            is ApiUiState.Loading -> {
+            is UIState.Loading -> {
                 Box(Modifier.padding(16.dp)) {
                     Text(text = "Loading...")
                 }
             }
 
-            is ApiUiState.Error -> {
+            is UIState.Error -> {
                 Box(Modifier.padding(16.dp)) {
                     Text(text = state.message)
                 }
             }
 
-            is ApiUiState.Success -> {
+            is UIState.Success -> {
                 content(state.data)
             }
         }

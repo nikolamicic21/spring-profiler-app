@@ -30,13 +30,13 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.ApiUiState
 import com.example.spring_profiler_app.data.BeansResponse
+import com.example.spring_profiler_app.data.UIState
 import com.example.spring_profiler_app.ui.components.ApiStateWrapper
 import kotlinx.coroutines.launch
 
 @Composable
-fun BeansScreen(beansState: ApiUiState<BeansResponse>) {
+fun BeansScreen(beansState: UIState<BeansResponse>) {
     ApiStateWrapper(
         state = beansState,
     ) { data ->

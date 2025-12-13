@@ -1,31 +1,16 @@
 package com.example.spring_profiler_app.data
 
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import com.example.spring_profiler_app.repo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-sealed class ApiUiState<out T> {
-    data object Loading : ApiUiState<Nothing>()
-    data class Error(val message: String) : ApiUiState<Nothing>()
-    data class Success<T>(val data: T) : ApiUiState<T>()
-}
-
-data class ServerState(
-    val server: Server,
-    val beans: ApiUiState<BeansResponse>,
-    val health: ApiUiState<HealthResponse>,
-    val configProps: ApiUiState<ConfigPropsResponse>,
-    val metrics: ApiUiState<MetricsResponse>,
-)
-
 private suspend fun <T> SnapshotStateMap<Server, ServerState>.refreshEndpoint(
     server: Server,
     endpoint: ActuatorEndpoints,
     fetchData: suspend () -> T,
-    updateState: ServerState.(ApiUiState<T>) -> ServerState
+    updateState: ServerState.(UIState<T>) -> ServerState
 ) {
     val stateMap = this
     try {
@@ -33,67 +18,72 @@ private suspend fun <T> SnapshotStateMap<Server, ServerState>.refreshEndpoint(
 
         withContext(Dispatchers.Main.immediate) {
             val currentState = stateMap[server] ?: return@withContext
-            stateMap[server] = currentState.updateState(ApiUiState.Success(response))
+            stateMap[server] = currentState.updateState(UIState.Success(response))
         }
     } catch (exception: Exception) {
         withContext(Dispatchers.Main.immediate) {
             val currentState = stateMap[server] ?: return@withContext
-            stateMap[server] = currentState.updateState(ApiUiState.Error(getFriendlyMessage(endpoint, exception)))
+            stateMap[server] = currentState.updateState(UIState.Error(getFriendlyMessage(endpoint, exception)))
         }
     }
 }
 
 suspend fun SnapshotStateMap<Server, ServerState>.refreshState(
-    server: Server
+    server: Server,
+    repository: ActuatorRepository
 ) {
     coroutineScope {
-        launch { refreshBeansState(server) }
-        launch { refreshHealthState(server) }
-        launch { refreshConfigPropsState(server) }
-        launch { refreshMetricsState(server) }
+        launch { refreshBeansState(server, repository) }
+        launch { refreshHealthState(server, repository) }
+        launch { refreshConfigPropsState(server, repository) }
+        launch { refreshMetricsState(server, repository) }
     }
 }
 
 suspend fun SnapshotStateMap<Server, ServerState>.refreshBeansState(
-    server: Server
+    server: Server,
+    repository: ActuatorRepository
 ) {
     refreshEndpoint(
         server = server,
         endpoint = ActuatorEndpoints.BEANS,
-        fetchData = { repo.getBeans(server) },
+        fetchData = { repository.getBeans(server) },
         updateState = { copy(beans = it) }
     )
 }
 
 suspend fun SnapshotStateMap<Server, ServerState>.refreshHealthState(
-    server: Server
+    server: Server,
+    repository: ActuatorRepository
 ) {
     refreshEndpoint(
         server = server,
         endpoint = ActuatorEndpoints.HEALTH,
-        fetchData = { repo.getHealth(server) },
+        fetchData = { repository.getHealth(server) },
         updateState = { copy(health = it) }
     )
 }
 
 suspend fun SnapshotStateMap<Server, ServerState>.refreshConfigPropsState(
-    server: Server
+    server: Server,
+    repository: ActuatorRepository
 ) {
     refreshEndpoint(
         server = server,
         endpoint = ActuatorEndpoints.CONFIG_PROPS,
-        fetchData = { repo.getConfigProps(server) },
+        fetchData = { repository.getConfigProps(server) },
         updateState = { copy(configProps = it) }
     )
 }
 
 suspend fun SnapshotStateMap<Server, ServerState>.refreshMetricsState(
-    server: Server
+    server: Server,
+    repository: ActuatorRepository
 ) {
     refreshEndpoint(
         server = server,
         endpoint = ActuatorEndpoints.METRICS,
-        fetchData = { repo.getMetrics(server) },
+        fetchData = { repository.getMetrics(server) },
         updateState = { copy(metrics = it) }
     )
 }

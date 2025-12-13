@@ -8,14 +8,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.ApiUiState
 import com.example.spring_profiler_app.data.ConfigPropsResponse
+import com.example.spring_profiler_app.data.UIState
 import com.example.spring_profiler_app.data.flattenConfigPropsObject
 import com.example.spring_profiler_app.ui.components.ApiStateWrapper
 import com.example.spring_profiler_app.ui.components.ScrollableContent
 
 @Composable
-fun ConfigPropsScreen(configPropsState: ApiUiState<ConfigPropsResponse>) {
+fun ConfigPropsScreen(configPropsState: UIState<ConfigPropsResponse>) {
     ApiStateWrapper(
         state = configPropsState,
     ) { data ->

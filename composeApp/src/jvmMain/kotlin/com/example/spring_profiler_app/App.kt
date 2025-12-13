@@ -50,13 +50,13 @@ fun App() {
 
             val refreshHealthCallback: suspend () -> Unit = {
                 currentServerKey.value?.let { server ->
-                    servers.refreshHealthState(server)
+                    servers.refreshHealthState(server, repo)
                 }
             }
 
             val refreshMetricsCallback: suspend () -> Unit = {
                 currentServerKey.value?.let { server ->
-                    servers.refreshMetricsState(server)
+                    servers.refreshMetricsState(server, repo)
                 }
             }
 
@@ -73,7 +73,7 @@ fun App() {
                         onAddServerClick = { currentServerKey.value = null },
                         onServerSelect = { server -> currentServerKey.value = server },
                         onRefreshServer = { server ->
-                            ioScope.launch { servers.refreshState(server) }
+                            ioScope.launch { servers.refreshState(server, repo) }
                         },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -96,7 +96,7 @@ fun App() {
                             servers = servers,
                             onServerAdded = { newServer ->
                                 ioScope.launch {
-                                    servers.refreshState(newServer)
+                                    servers.refreshState(newServer, repo)
                                 }
                             },
                             ioScope = ioScope,

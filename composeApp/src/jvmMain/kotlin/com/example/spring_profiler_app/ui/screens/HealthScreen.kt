@@ -12,8 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.ApiUiState
 import com.example.spring_profiler_app.data.HealthResponse
+import com.example.spring_profiler_app.data.UIState
 import com.example.spring_profiler_app.ui.components.ApiStateWrapper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -21,7 +21,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun HealthScreen(
-    healthState: ApiUiState<HealthResponse>,
+    healthState: UIState<HealthResponse>,
     refreshHealthCallback: suspend () -> Unit
 ) {
     LaunchedEffect(Unit) {

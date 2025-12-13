@@ -20,9 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.spring_profiler_app.client.client
 import com.example.spring_profiler_app.client.safeRequest
-import com.example.spring_profiler_app.data.ApiUiState
 import com.example.spring_profiler_app.data.Server
 import com.example.spring_profiler_app.data.ServerState
+import com.example.spring_profiler_app.data.UIState
 import io.ktor.client.request.url
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
@@ -71,10 +71,10 @@ fun AddServerForm(
                             if (!servers.keys.contains(newServer)) {
                                 servers[newServer] = ServerState(
                                     newServer,
-                                    ApiUiState.Loading,
-                                    ApiUiState.Loading,
-                                    ApiUiState.Loading,
-                                    ApiUiState.Loading
+                                    UIState.Loading,
+                                    UIState.Loading,
+                                    UIState.Loading,
+                                    UIState.Loading
                                 )
                                 onServerAdded(newServer)
                             }

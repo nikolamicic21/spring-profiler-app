@@ -31,6 +31,9 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+            implementation("io.mockk:mockk:1.13.13")
+            implementation("io.ktor:ktor-client-mock:${ktorVersion}")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

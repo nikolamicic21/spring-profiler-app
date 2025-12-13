@@ -14,8 +14,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.ApiUiState
 import com.example.spring_profiler_app.data.MetricsResponse
+import com.example.spring_profiler_app.data.UIState
 import com.example.spring_profiler_app.data.formatNumberWithoutGrouping
 import com.example.spring_profiler_app.ui.components.ApiStateWrapper
 import com.example.spring_profiler_app.ui.components.ScrollableContent
@@ -25,7 +25,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun MetricsScreen(
-    metricsState: ApiUiState<MetricsResponse>,
+    metricsState: UIState<MetricsResponse>,
     refreshMetricsCallback: suspend () -> Unit
 ) {
     LaunchedEffect(Unit) {

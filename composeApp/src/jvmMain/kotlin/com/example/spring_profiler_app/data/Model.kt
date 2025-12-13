@@ -5,6 +5,20 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
+sealed class UIState<out T> {
+    data object Loading : UIState<Nothing>()
+    data class Error(val message: String) : UIState<Nothing>()
+    data class Success<T>(val data: T) : UIState<T>()
+}
+
+data class ServerState(
+    val server: Server,
+    val beans: UIState<BeansResponse>,
+    val health: UIState<HealthResponse>,
+    val configProps: UIState<ConfigPropsResponse>,
+    val metrics: UIState<MetricsResponse>,
+)
+
 enum class ActuatorEndpoints(val title: String) {
     BEANS("Beans"), HEALTH("Health"), CONFIG_PROPS("Configuration properties"), METRICS("Metrics")
 }
@@ -64,19 +78,14 @@ fun flattenConfigPropsObject(
 
         when (element) {
             is JsonObject -> {
-                // Nested object, recurse
                 flattenConfigPropsObject(element, currentPath, result)
             }
 
             is JsonPrimitive -> {
-                // Primitive value (String, Boolean, Number)
-                // Use content for the raw string value (e.g., "true", "/actuator")
                 result[currentPath] = element.content
             }
 
             else -> {
-                // Array or other types (e.g., empty array [], list of strings ["*"])
-                // Simply serialize the element as a clean JSON string
                 result[currentPath] = element.toString()
             }
         }
