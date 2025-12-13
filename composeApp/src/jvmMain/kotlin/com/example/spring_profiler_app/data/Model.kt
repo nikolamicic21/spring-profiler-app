@@ -1,5 +1,6 @@
 package com.example.spring_profiler_app.data
 
+import io.ktor.http.Url
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -8,7 +9,7 @@ enum class ActuatorEndpoints(val title: String) {
     BEANS("Beans"), HEALTH("Health"), CONFIG_PROPS("Configuration properties"), METRICS("Metrics")
 }
 
-data class Server(val host: String, val port: Int)
+data class Server(val url: Url)
 
 @Serializable
 data class BeansResponse(

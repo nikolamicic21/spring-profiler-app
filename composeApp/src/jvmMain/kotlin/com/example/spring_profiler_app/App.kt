@@ -56,6 +56,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.spring_profiler_app.client.client
+import com.example.spring_profiler_app.client.safeRequest
 import com.example.spring_profiler_app.data.ActuatorEndpoints
 import com.example.spring_profiler_app.data.ActuatorRepository
 import com.example.spring_profiler_app.data.ApiUiState
@@ -70,6 +72,8 @@ import com.example.spring_profiler_app.data.formatNumberWithoutGrouping
 import com.example.spring_profiler_app.data.refreshHealthState
 import com.example.spring_profiler_app.data.refreshMetricsState
 import com.example.spring_profiler_app.data.refreshState
+import io.ktor.client.request.url
+import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -88,6 +92,7 @@ fun App() {
     MaterialTheme {
         val servers = remember { mutableStateMapOf<Server, ServerState>() }
         val currentServerKey = remember { mutableStateOf<Server?>(null) }
+        val isFormError = remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
         val ioScope = remember(scope) {
             CoroutineScope(scope.coroutineContext + Dispatchers.IO + SupervisorJob(scope.coroutineContext[Job]))
@@ -150,7 +155,7 @@ fun App() {
                                                             currentServerKey.value = server
                                                         }) {
                                                         Column(modifier = Modifier.padding(10.dp).fillMaxWidth()) {
-                                                            Text(text = "${server.host}:${server.port}")
+                                                            Text(text = "${server.url.host}:${server.url.port}")
                                                         }
                                                     }
                                                 }
@@ -188,8 +193,7 @@ fun App() {
                             val currentServerState = currentServerKey.value?.let { servers[it] }
                             when (currentServerState) {
                                 null -> Box {
-                                    var host by rememberSaveable { mutableStateOf("") }
-                                    var port by rememberSaveable { mutableStateOf("") }
+                                    var urlText by rememberSaveable { mutableStateOf("") }
 
                                     Column(
                                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -197,37 +201,45 @@ fun App() {
                                         verticalArrangement = Arrangement.spacedBy(16.dp) // Spacing between elements
                                     ) {
                                         OutlinedTextField(
-                                            value = host,
-                                            onValueChange = { host = it },
-                                            label = { Text("Server host") },
+                                            value = urlText,
+                                            onValueChange = { urlText = it },
+                                            label = { Text("Server's actuator endpoint (URL)") },
                                             singleLine = true,
                                             modifier = Modifier.fillMaxWidth()
                                         )
-                                        OutlinedTextField(
-                                            value = port,
-                                            onValueChange = { port = it },
-                                            label = { Text("Server port") },
-                                            singleLine = true,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
+                                        if (isFormError.value) {
+                                            Text(text = "There's been an error connecting to the server's actuator endpoint. Please check the URL!")
+                                        }
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Button(
                                             onClick = {
-                                                val newServer = Server(host, port.toInt())
-                                                if (!servers.keys.contains(newServer)) {
-                                                    servers[newServer] = ServerState(
-                                                        newServer,
-                                                        ApiUiState.Loading,
-                                                        ApiUiState.Loading,
-                                                        ApiUiState.Loading,
-                                                        ApiUiState.Loading
-                                                    )
-                                                    ioScope.launch {
-                                                        servers.refreshState(newServer)
+                                                ioScope.launch {
+                                                    try {
+                                                        val serverUrl = Url(urlText)
+                                                        client.safeRequest<Unit> {
+                                                            url(serverUrl)
+                                                        }
+
+                                                        val newServer = Server(serverUrl)
+                                                        if (!servers.keys.contains(newServer)) {
+                                                            servers[newServer] = ServerState(
+                                                                newServer,
+                                                                ApiUiState.Loading,
+                                                                ApiUiState.Loading,
+                                                                ApiUiState.Loading,
+                                                                ApiUiState.Loading
+                                                            )
+                                                            launch {
+                                                                servers.refreshState(newServer)
+                                                            }
+                                                        }
+                                                        isFormError.value = false
+                                                    } catch (_: Exception) {
+                                                        isFormError.value = true
                                                     }
                                                 }
                                             },
-                                            enabled = host.isNotBlank() && port.isNotBlank(),
+                                            enabled = urlText.isNotBlank(),
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text("Connect")

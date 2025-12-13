@@ -29,7 +29,7 @@ suspend inline fun <reified T> HttpClient.safeRequest(
                 else -> throw ServerResponseException(response, "Unknown Error: ${response.status}")
             }
         }
-    } catch (e: JsonConvertException) {
+    } catch (_: JsonConvertException) {
         throw ServerResponseException(response, "Server Error: ${response.status}")
     } catch (_: ClientRequestException) {
         throw ClientRequestException(response, "Client request failed")

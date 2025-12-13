@@ -15,24 +15,23 @@ interface ActuatorRepository {
 }
 
 class ActuatorRepositoryImpl(val client: HttpClient) : ActuatorRepository {
-    private val actuatorPath = "actuator"
 
     override suspend fun getBeans(
         server: Server
     ): BeansResponse =
-        client.safeRequest { url("http://${server.host}:${server.port}/${actuatorPath}/beans") }
+        client.safeRequest { url("${server.url}/beans") }
 
     override suspend fun getHealth(server: Server): HealthResponse =
-        client.safeRequest { url("http://${server.host}:${server.port}/${actuatorPath}/health") }
+        client.safeRequest { url("${server.url}/health") }
 
     override suspend fun getConfigProps(server: Server): ConfigPropsResponse =
-        client.safeRequest { url("http://${server.host}:${server.port}/${actuatorPath}/configprops") }
+        client.safeRequest { url("${server.url}/configprops") }
 
     override suspend fun getMetrics(server: Server): MetricsResponse = coroutineScope {
-        val metricNames = client.safeRequest<MetricNamesResult> { url("http://${server.host}:${server.port}/${actuatorPath}/metrics") }
+        val metricNames = client.safeRequest<MetricNamesResult> { url("${server.url}/metrics") }
         val metrics = metricNames.names.map {
             async {
-                client.safeRequest<MetricsResult> { url("http://${server.host}:${server.port}/${actuatorPath}/metrics/${it}") }
+                client.safeRequest<MetricsResult> { url("${server.url}/metrics/${it}") }
             }
         }.awaitAll()
 
