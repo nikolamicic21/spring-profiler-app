@@ -127,6 +127,108 @@ class AddServerFormTest {
 
         // Then
         onNodeWithText("There's been an error connecting to the server's actuator endpoint. Please check the URL!").assertDoesNotExist()
+        onNodeWithText("Server already exists").assertDoesNotExist()
+    }
+
+    @Test
+    fun `AddServerForm should show error when server connection fails`() = runComposeUiTest {
+        // Given
+        val servers = mutableMapOf<Server, ServerState>()
+        val mockClient = createMockClient(HttpStatusCode.InternalServerError)
+        val ioScope = CoroutineScope(testDispatcher + SupervisorJob())
+
+        // When
+        setContent {
+            CompositionLocalProvider(Client provides mockClient) {
+                AddServerForm(
+                    servers = servers,
+                    onServerAdded = {},
+                    ioScope = ioScope
+                )
+            }
+        }
+
+        onNodeWithText("Server's actuator endpoint (URL)").performClick()
+        onNodeWithText("Server's actuator endpoint (URL)").performTextInput("http://localhost:8080/actuator")
+        onNodeWithText("Connect").performClick()
+
+        // Advance the test dispatcher to execute pending coroutines
+        testDispatcher.scheduler.runCurrent()
+        waitForIdle()
+
+        // Then
+        onNodeWithText("There's been an error connecting to the server's actuator endpoint. Please check the URL!").assertIsDisplayed()
+    }
+
+    @Test
+    fun `AddServerForm should show error when server already exists`() = runComposeUiTest {
+        // Given
+        val existingServer = Server(io.ktor.http.Url("http://localhost:8080/actuator"))
+        val servers = mutableMapOf(
+            existingServer to ServerState(
+                existingServer,
+                com.example.spring_profiler_app.data.UIState.Loading,
+                com.example.spring_profiler_app.data.UIState.Loading,
+                com.example.spring_profiler_app.data.UIState.Loading,
+                com.example.spring_profiler_app.data.UIState.Loading
+            )
+        )
+        val mockClient = createMockClient(HttpStatusCode.OK)
+        val ioScope = CoroutineScope(testDispatcher + SupervisorJob())
+
+        // When
+        setContent {
+            CompositionLocalProvider(Client provides mockClient) {
+                AddServerForm(
+                    servers = servers,
+                    onServerAdded = {},
+                    ioScope = ioScope
+                )
+            }
+        }
+
+        onNodeWithText("Server's actuator endpoint (URL)").performClick()
+        onNodeWithText("Server's actuator endpoint (URL)").performTextInput("http://localhost:8080/actuator")
+        onNodeWithText("Connect").performClick()
+
+        testDispatcher.scheduler.runCurrent()
+        waitForIdle()
+
+        // Then
+        onNodeWithText("Server already exists").assertIsDisplayed()
+    }
+
+    @Test
+    fun `AddServerForm should add server successfully when connection succeeds`() = runComposeUiTest {
+        // Given
+        val servers = mutableMapOf<Server, ServerState>()
+        val mockClient = createMockClient(HttpStatusCode.OK)
+        val ioScope = CoroutineScope(testDispatcher + SupervisorJob())
+        var addedServer: Server? = null
+
+        // When
+        setContent {
+            CompositionLocalProvider(Client provides mockClient) {
+                AddServerForm(
+                    servers = servers,
+                    onServerAdded = { addedServer = it },
+                    ioScope = ioScope
+                )
+            }
+        }
+
+        onNodeWithText("Server's actuator endpoint (URL)").performClick()
+        onNodeWithText("Server's actuator endpoint (URL)").performTextInput("http://localhost:9090/actuator")
+        onNodeWithText("Connect").performClick()
+        
+        testDispatcher.scheduler.runCurrent()
+        waitForIdle()
+
+        // Then
+        assert(servers.isNotEmpty()) { "Server should be added to the map" }
+        assert(addedServer != null) { "onServerAdded callback should be called" }
+        assert(addedServer?.url?.host == "localhost") { "Server host should be localhost" }
+        assert(addedServer?.url?.port == 9090) { "Server port should be 9090" }
     }
 
     private fun createMockClient(statusCode: HttpStatusCode): HttpClient {

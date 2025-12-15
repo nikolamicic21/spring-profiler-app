@@ -38,11 +38,11 @@ fun AddServerForm(
     Box(modifier = modifier) {
         val client = Client.current
         var urlText by rememberSaveable { mutableStateOf("") }
-        var isFormError by rememberSaveable { mutableStateOf(false) }
+        var errorMessage by rememberSaveable { mutableStateOf("") }
 
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
@@ -54,8 +54,8 @@ fun AddServerForm(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            if (isFormError) {
-                Text(text = "There's been an error connecting to the server's actuator endpoint. Please check the URL!")
+            if (errorMessage.isNotBlank()) {
+                Text(text = errorMessage)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -65,24 +65,29 @@ fun AddServerForm(
                     ioScope.launch {
                         try {
                             val serverUrl = Url(urlText)
-                            safeRequest<Unit>(client) {
-                                url(serverUrl)
-                            }
+                            if (servers.keys.any { it.url.host == serverUrl.host && it.url.port == serverUrl.port }) {
+                                errorMessage = "Server already exists"
+                            } else {
+                                safeRequest<Unit>(client) {
+                                    url(serverUrl)
+                                }
+                                val newServer = Server(serverUrl)
+                                if (!servers.keys.any { it.url.host == newServer.url.host && it.url.port == newServer.url.port }) {
+                                    servers[newServer] = ServerState(
+                                        newServer,
+                                        UIState.Loading,
+                                        UIState.Loading,
+                                        UIState.Loading,
+                                        UIState.Loading
+                                    )
+                                    onServerAdded(newServer)
+                                }
 
-                            val newServer = Server(serverUrl)
-                            if (!servers.keys.any { it.url.host == newServer.url.host && it.url.port == newServer.url.port }) {
-                                servers[newServer] = ServerState(
-                                    newServer,
-                                    UIState.Loading,
-                                    UIState.Loading,
-                                    UIState.Loading,
-                                    UIState.Loading
-                                )
-                                onServerAdded(newServer)
+                                errorMessage = ""
                             }
-                            isFormError = false
                         } catch (_: Exception) {
-                            isFormError = true
+                            errorMessage =
+                                "There's been an error connecting to the server's actuator endpoint. Please check the URL!"
                         }
                     }
                 },
