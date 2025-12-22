@@ -1,0 +1,33 @@
+name: Build workflow
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  run-tests-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+          
+      - name: Run Tests
+        run: ./gradlew allTests
+
+      - name: Run Kover Reports
+        run: ./gradlew koverHtmlReport koverXmlReport
+
+      - name: Upload HTML Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: kover-html-report
+          path: composeApp/build/reports/kover/html
