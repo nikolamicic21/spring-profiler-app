@@ -61,7 +61,8 @@ class HealthScreenTest {
         }
 
         // Then
-        onNodeWithText("health status: UP").assertIsDisplayed()
+        onNodeWithText("System is UP").assertIsDisplayed()
+        onNodeWithText("All systems operational").assertIsDisplayed()
     }
 
     @Test
@@ -79,7 +80,8 @@ class HealthScreenTest {
         }
 
         // Then
-        onNodeWithText("health status: DOWN").assertIsDisplayed()
+        onNodeWithText("System is DOWN").assertIsDisplayed()
+        onNodeWithText("Action required: Some components are failing").assertIsDisplayed()
     }
 
     @Test
@@ -101,9 +103,10 @@ class HealthScreenTest {
         }
 
         // Then
-        onNodeWithText("health status: UP").assertIsDisplayed()
-        onNodeWithText("db component status: UP").assertIsDisplayed()
-        onNodeWithText("diskSpace component status: UP").assertIsDisplayed()
+        onNodeWithText("System is UP").assertIsDisplayed()
+        onNodeWithText("System Components").assertIsDisplayed()
+        onNodeWithText("db").assertIsDisplayed()
+        onNodeWithText("diskSpace").assertIsDisplayed()
     }
 
     @Test
@@ -124,7 +127,73 @@ class HealthScreenTest {
         }
 
         // Then
-        onNodeWithText("health status: DOWN").assertIsDisplayed()
-        onNodeWithText("db component status: DOWN").assertIsDisplayed()
+        onNodeWithText("System is DOWN").assertIsDisplayed()
+        onNodeWithText("db").assertIsDisplayed()
+    }
+
+    @Test
+    fun `HealthScreen should display multiple components with different statuses`() = runComposeUiTest {
+        // Given
+        val components = mapOf(
+            "db" to HealthResponse.Component("UP"),
+            "redis" to HealthResponse.Component("DOWN"),
+            "diskSpace" to HealthResponse.Component("UP")
+        )
+        val healthResponse = HealthResponse("DOWN", components)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is DOWN").assertIsDisplayed()
+        onNodeWithText("db").assertIsDisplayed()
+        onNodeWithText("redis").assertIsDisplayed()
+        onNodeWithText("diskSpace").assertIsDisplayed()
+    }
+
+    @Test
+    fun `HealthScreen should display System Components header when components exist`() = runComposeUiTest {
+        // Given
+        val components = mapOf(
+            "db" to HealthResponse.Component("UP")
+        )
+        val healthResponse = HealthResponse("UP", components)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System Components").assertIsDisplayed()
+    }
+
+    @Test
+    fun `HealthScreen should handle empty components`() = runComposeUiTest {
+        // Given
+        val healthResponse = HealthResponse("UP", emptyMap())
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is UP").assertIsDisplayed()
+        onNodeWithText("All systems operational").assertIsDisplayed()
     }
 }
