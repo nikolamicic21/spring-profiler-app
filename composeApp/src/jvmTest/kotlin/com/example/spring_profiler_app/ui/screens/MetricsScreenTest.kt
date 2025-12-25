@@ -68,7 +68,8 @@ class MetricsScreenTest {
         }
 
         // Then
-        onNodeWithText("Metric name: jvm.memory.used").assertIsDisplayed()
+        onNodeWithText("JVM").assertIsDisplayed()
+        onNodeWithText("memory.used").assertIsDisplayed()
     }
 
     @Test
@@ -91,8 +92,9 @@ class MetricsScreenTest {
         }
 
         // Then
-        onNodeWithText("Metric name: jvm.memory.used").assertIsDisplayed()
-        onNodeWithText("Base unit: bytes").assertIsDisplayed()
+        onNodeWithText("JVM").assertIsDisplayed()
+        onNodeWithText("memory.used").assertIsDisplayed()
+        onNodeWithText("bytes").assertIsDisplayed()
     }
 
     @Test
@@ -118,9 +120,10 @@ class MetricsScreenTest {
         }
 
         // Then
-        onNodeWithText("Metric name: jvm.memory.used").assertIsDisplayed()
-        onNodeWithText("Measurements:").assertIsDisplayed()
-        onNodeWithText("VALUE: 1234567.89").assertIsDisplayed()
+        onNodeWithText("JVM").assertIsDisplayed()
+        onNodeWithText("memory.used").assertIsDisplayed()
+        onNodeWithText("VALUE").assertIsDisplayed()
+        onNodeWithText("1234567.89").assertIsDisplayed()
     }
 
     @Test
@@ -148,10 +151,14 @@ class MetricsScreenTest {
         }
 
         // Then
-        onNodeWithText("Metric name: http.server.requests").assertIsDisplayed()
-        onNodeWithText("COUNT: 100").assertIsDisplayed()
-        onNodeWithText("TOTAL_TIME: 5000").assertIsDisplayed()
-        onNodeWithText("MAX: 250").assertIsDisplayed()
+        onNodeWithText("HTTP").assertIsDisplayed()
+        onNodeWithText("server.requests").assertIsDisplayed()
+        onNodeWithText("COUNT").assertIsDisplayed()
+        onNodeWithText("100").assertIsDisplayed()
+        onNodeWithText("TOTAL_TIME").assertIsDisplayed()
+        onNodeWithText("5000").assertIsDisplayed()
+        onNodeWithText("MAX").assertIsDisplayed()
+        onNodeWithText("250").assertIsDisplayed()
     }
 
     @Test
@@ -179,7 +186,65 @@ class MetricsScreenTest {
         }
 
         // Then
-        onNodeWithText("Metric name: jvm.memory.used").assertIsDisplayed()
-        onNodeWithText("Metric name: system.cpu.usage").assertIsDisplayed()
+        onNodeWithText("JVM").assertIsDisplayed()
+        onNodeWithText("memory.used").assertIsDisplayed()
+        onNodeWithText("SYSTEM").assertIsDisplayed()
+        onNodeWithText("cpu.usage").assertIsDisplayed()
+    }
+
+    @Test
+    fun `MetricsScreen should group metrics by prefix`() = runComposeUiTest {
+        // Given
+        val metric1 = Metric(
+            name = "jvm.memory.used",
+            measurements = listOf(Measurement("VALUE", 1000000.0)),
+            unit = "bytes"
+        )
+        val metric2 = Metric(
+            name = "jvm.threads.live",
+            measurements = listOf(Measurement("VALUE", 50.0)),
+            unit = null
+        )
+        val metricsResponse = MetricsResponse(listOf(metric1, metric2))
+        val metricsState = UIState.Success(metricsResponse)
+
+        // When
+        setContent {
+            MetricsScreen(
+                metricsState = metricsState,
+                refreshMetricsCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("JVM").assertIsDisplayed()
+        onNodeWithText("memory.used").assertIsDisplayed()
+        onNodeWithText("threads.live").assertIsDisplayed()
+    }
+
+    @Test
+    fun `MetricsScreen should display metric without unit`() = runComposeUiTest {
+        // Given
+        val metric = Metric(
+            name = "system.cpu.count",
+            measurements = listOf(Measurement("VALUE", 8.0)),
+            unit = null
+        )
+        val metricsResponse = MetricsResponse(listOf(metric))
+        val metricsState = UIState.Success(metricsResponse)
+
+        // When
+        setContent {
+            MetricsScreen(
+                metricsState = metricsState,
+                refreshMetricsCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("SYSTEM").assertIsDisplayed()
+        onNodeWithText("cpu.count").assertIsDisplayed()
+        onNodeWithText("VALUE").assertIsDisplayed()
+        onNodeWithText("8").assertIsDisplayed()
     }
 }

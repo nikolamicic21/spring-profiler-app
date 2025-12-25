@@ -2,7 +2,10 @@ package com.example.spring_profiler_app.ui.screens
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import com.example.spring_profiler_app.data.BeanProperties
 import com.example.spring_profiler_app.data.ConfigPropsResponse
@@ -45,6 +48,39 @@ class ConfigPropsScreenTest {
     }
 
     @Test
+    fun `ConfigPropsScreen should display search field`() = runComposeUiTest {
+        // Given
+        val properties = JsonObject(mapOf("port" to JsonPrimitive(8080)))
+        val beanProperties = BeanProperties(prefix = "server", properties = properties)
+        val context = Context(beans = mapOf("serverProperties" to beanProperties))
+        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val configPropsState = UIState.Success(configPropsResponse)
+
+        // When
+        setContent {
+            ConfigPropsScreen(configPropsState = configPropsState)
+        }
+
+        // Then
+        onNodeWithText("Search prefixes (e.g., server, datasource)...").assertIsDisplayed()
+    }
+
+    @Test
+    fun `ConfigPropsScreen should display empty state when no properties`() = runComposeUiTest {
+        // Given
+        val configPropsResponse = ConfigPropsResponse(contexts = emptyMap())
+        val configPropsState = UIState.Success(configPropsResponse)
+
+        // When
+        setContent {
+            ConfigPropsScreen(configPropsState = configPropsState)
+        }
+
+        // Then
+        onNodeWithText("No configuration prefixes match your search.").assertIsDisplayed()
+    }
+
+    @Test
     fun `ConfigPropsScreen should display configuration property`() = runComposeUiTest {
         // Given
         val properties = JsonObject(
@@ -68,7 +104,9 @@ class ConfigPropsScreenTest {
         }
 
         // Then
-        onNodeWithText("server.port: 8080").assertIsDisplayed()
+        onNodeWithText("server").assertIsDisplayed()
+        onNodeWithText("port").assertIsDisplayed()
+        onNodeWithText("8080").assertIsDisplayed()
     }
 
     @Test
@@ -98,8 +136,11 @@ class ConfigPropsScreenTest {
         }
 
         // Then
-        onNodeWithText("server.port: 8080").assertIsDisplayed()
-        onNodeWithText("server.address: localhost").assertIsDisplayed()
+        onNodeWithText("server").assertIsDisplayed()
+        onNodeWithText("port").assertIsDisplayed()
+        onNodeWithText("8080").assertIsDisplayed()
+        onNodeWithText("address").assertIsDisplayed()
+        onNodeWithText("localhost").assertIsDisplayed()
     }
 
     @Test
@@ -134,8 +175,11 @@ class ConfigPropsScreenTest {
         }
 
         // Then
-        onNodeWithText("server.port: 8080").assertIsDisplayed()
-        onNodeWithText("server.tomcat.max-threads: 200").assertIsDisplayed()
+        onNodeWithText("server").assertIsDisplayed()
+        onNodeWithText("port").assertIsDisplayed()
+        onNodeWithText("8080").assertIsDisplayed()
+        onNodeWithText("tomcat.max-threads").assertIsDisplayed()
+        onNodeWithText("200").assertIsDisplayed()
     }
 
     @Test
@@ -166,7 +210,85 @@ class ConfigPropsScreenTest {
         }
 
         // Then
-        onNodeWithText("server.port: 8080").assertIsDisplayed()
-        onNodeWithText("management.port: 9090").assertIsDisplayed()
+        onNodeWithText("server").assertIsDisplayed()
+        onNodeWithText("management").assertIsDisplayed()
+        onNodeWithText("8080").assertIsDisplayed()
+        onNodeWithText("9090").assertIsDisplayed()
+    }
+
+    @Test
+    fun `ConfigPropsScreen should filter properties by search query`() = runComposeUiTest {
+        // Given
+        val serverProperties = JsonObject(mapOf("port" to JsonPrimitive(8080)))
+        val datasourceProperties = JsonObject(mapOf("url" to JsonPrimitive("jdbc:mysql://localhost")))
+        val serverBean = BeanProperties(prefix = "server", properties = serverProperties)
+        val datasourceBean = BeanProperties(prefix = "datasource", properties = datasourceProperties)
+        val context = Context(
+            beans = mapOf(
+                "serverProperties" to serverBean,
+                "datasourceProperties" to datasourceBean
+            )
+        )
+        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val configPropsState = UIState.Success(configPropsResponse)
+
+        // When
+        setContent {
+            ConfigPropsScreen(configPropsState = configPropsState)
+        }
+
+        onNodeWithText("Search prefixes (e.g., server, datasource)...").performClick()
+        onNodeWithText("Search prefixes (e.g., server, datasource)...").performTextInput("server")
+        waitForIdle()
+
+        // Then
+        onNodeWithText("8080").assertIsDisplayed()
+        onNodeWithText("jdbc:mysql://localhost").assertDoesNotExist()
+    }
+
+    @Test
+    fun `ConfigPropsScreen should clear search query when clear button is clicked`() = runComposeUiTest {
+        // Given
+        val properties = JsonObject(mapOf("port" to JsonPrimitive(8080)))
+        val beanProperties = BeanProperties(prefix = "server", properties = properties)
+        val context = Context(beans = mapOf("serverProperties" to beanProperties))
+        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val configPropsState = UIState.Success(configPropsResponse)
+
+        // When
+        setContent {
+            ConfigPropsScreen(configPropsState = configPropsState)
+        }
+
+        onNodeWithText("Search prefixes (e.g., server, datasource)...").performClick()
+        onNodeWithText("Search prefixes (e.g., server, datasource)...").performTextInput("test")
+        waitForIdle()
+        onNodeWithContentDescription("Clear").performClick()
+        waitForIdle()
+
+        // Then
+        onNodeWithText("8080").assertIsDisplayed()
+    }
+
+    @Test
+    fun `ConfigPropsScreen should display empty state when search has no results`() = runComposeUiTest {
+        // Given
+        val properties = JsonObject(mapOf("port" to JsonPrimitive(8080)))
+        val beanProperties = BeanProperties(prefix = "server", properties = properties)
+        val context = Context(beans = mapOf("serverProperties" to beanProperties))
+        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val configPropsState = UIState.Success(configPropsResponse)
+
+        // When
+        setContent {
+            ConfigPropsScreen(configPropsState = configPropsState)
+        }
+
+        onNodeWithText("Search prefixes (e.g., server, datasource)...").performClick()
+        onNodeWithText("Search prefixes (e.g., server, datasource)...").performTextInput("nonexistent")
+        waitForIdle()
+
+        // Then
+        onNodeWithText("No configuration prefixes match your search.").assertIsDisplayed()
     }
 }

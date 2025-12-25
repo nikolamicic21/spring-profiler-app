@@ -68,7 +68,7 @@ class ServerDetailsPanelTest {
         }
 
         // Then
-        onNodeWithText("Search for Bean by name").assertIsDisplayed()
+        onNodeWithText("No bean names match your search.").assertIsDisplayed()
     }
 
     @Test
@@ -94,7 +94,7 @@ class ServerDetailsPanelTest {
 
         // Then
         onNodeWithText("Health").performClick()
-        onNodeWithText("health status: UP").assertIsDisplayed()
+        onNodeWithText("System is UP").assertIsDisplayed()
     }
 
     @Test
