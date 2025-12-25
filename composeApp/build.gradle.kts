@@ -70,6 +70,9 @@ kover {
                 // Exclude main function
                 packages("com.example.spring_profiler_app.MainKt")
 
+                // Exclude generated packages
+                packages("spring_profiler_app.composeapp.generated*")
+
                 // Exclude Compose generated code
                 classes("*\$\$ExternalSyntheticLambda*")
             }
