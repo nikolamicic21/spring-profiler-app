@@ -196,4 +196,150 @@ class HealthScreenTest {
         onNodeWithText("System is UP").assertIsDisplayed()
         onNodeWithText("All systems operational").assertIsDisplayed()
     }
+
+    @Test
+    fun `HealthScreen should NOT display System Components label when components is null`() = runComposeUiTest {
+        // Given
+        val healthResponse = HealthResponse("UP", null)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is UP").assertIsDisplayed()
+        onNodeWithText("System Components").assertDoesNotExist()
+    }
+
+    @Test
+    fun `HealthScreen should NOT display System Components label when components is empty map`() = runComposeUiTest {
+        // Given
+        val healthResponse = HealthResponse("UP", emptyMap())
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is UP").assertIsDisplayed()
+        onNodeWithText("All systems operational").assertIsDisplayed()
+        onNodeWithText("System Components").assertDoesNotExist()
+    }
+
+    @Test
+    fun `HealthScreen should NOT display System Components label when DOWN with no components`() = runComposeUiTest {
+        // Given
+        val healthResponse = HealthResponse("DOWN", null)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is DOWN").assertIsDisplayed()
+        onNodeWithText("Action required: Some components are failing").assertIsDisplayed()
+        onNodeWithText("System Components").assertDoesNotExist()
+    }
+
+    @Test
+    fun `HealthScreen should display System Components label only when components exist`() = runComposeUiTest {
+        // Given
+        val components = mapOf(
+            "db" to HealthResponse.Component("UP"),
+            "cache" to HealthResponse.Component("UP")
+        )
+        val healthResponse = HealthResponse("UP", components)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is UP").assertIsDisplayed()
+        onNodeWithText("System Components").assertIsDisplayed()
+        onNodeWithText("db").assertIsDisplayed()
+        onNodeWithText("cache").assertIsDisplayed()
+    }
+
+    @Test
+    fun `HealthScreen should display OUT_OF_SERVICE status correctly`() = runComposeUiTest {
+        // Given
+        val components = mapOf(
+            "service" to HealthResponse.Component("OUT_OF_SERVICE")
+        )
+        val healthResponse = HealthResponse("OUT_OF_SERVICE", components)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is OUT_OF_SERVICE").assertIsDisplayed()
+        onNodeWithText("Action required: Some components are failing").assertIsDisplayed()
+        onNodeWithText("System Components").assertIsDisplayed()
+        onNodeWithText("service").assertIsDisplayed()
+    }
+
+    @Test
+    fun `HealthScreen should display global status hero with correct message for UP status`() = runComposeUiTest {
+        // Given
+        val healthResponse = HealthResponse("UP", null)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is UP").assertIsDisplayed()
+        onNodeWithText("All systems operational").assertIsDisplayed()
+    }
+
+    @Test
+    fun `HealthScreen should display global status hero with correct message for DOWN status`() = runComposeUiTest {
+        // Given
+        val healthResponse = HealthResponse("DOWN", null)
+        val healthState = UIState.Success(healthResponse)
+
+        // When
+        setContent {
+            HealthScreen(
+                healthState = healthState,
+                refreshHealthCallback = {}
+            )
+        }
+
+        // Then
+        onNodeWithText("System is DOWN").assertIsDisplayed()
+        onNodeWithText("Action required: Some components are failing").assertIsDisplayed()
+    }
 }
