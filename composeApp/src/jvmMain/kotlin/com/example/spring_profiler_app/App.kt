@@ -24,6 +24,7 @@ import com.example.spring_profiler_app.data.refreshState
 import com.example.spring_profiler_app.ui.panels.AddServerForm
 import com.example.spring_profiler_app.ui.panels.ServerDetailsPanel
 import com.example.spring_profiler_app.ui.panels.ServerListPanel
+import com.example.spring_profiler_app.ui.rememberDebouncedCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -64,14 +65,18 @@ fun App() {
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
+                    val debouncedRefreshServer = rememberDebouncedCallback<Server>(
+                        debounceInterval = 1000L
+                    ) { server ->
+                        ioScope.launch { servers.refreshState(server, repository) }
+                    }
+
                     ServerListPanel(
                         servers = servers,
                         currentServerKey = currentServerKey.value,
                         onAddServerClick = { currentServerKey.value = null },
                         onServerSelect = { server -> currentServerKey.value = server },
-                        onRefreshServer = { server ->
-                            ioScope.launch { servers.refreshState(server, repository) }
-                        },
+                        onRefreshServer = debouncedRefreshServer,
                         onDeleteServer = { server ->
                             if (currentServerKey.value == server) {
                                 currentServerKey.value = null
