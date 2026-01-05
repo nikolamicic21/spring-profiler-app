@@ -29,7 +29,9 @@ class ConfigPropsScreenTest {
         }
 
         // Then
-        onNodeWithText("Loading...").assertIsDisplayed()
+        waitForIdle()
+        mainClock.advanceTimeBy(100)
+        onNodeWithText("Loading configuration properties...").assertExists()
     }
 
     @Test

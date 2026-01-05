@@ -48,13 +48,13 @@ fun App() {
 
             val refreshHealthCallback: suspend () -> Unit = {
                 currentServerKey.value?.let { server ->
-                    servers.refreshHealthState(server, repository)
+                    servers.refreshHealthState(server, repository, showLoadingOnRefresh = false)
                 }
             }
 
             val refreshMetricsCallback: suspend () -> Unit = {
                 currentServerKey.value?.let { server ->
-                    servers.refreshMetricsState(server, repository)
+                    servers.refreshMetricsState(server, repository, showLoadingOnRefresh = false)
                 }
             }
 

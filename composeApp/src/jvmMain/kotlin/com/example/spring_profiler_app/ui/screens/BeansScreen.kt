@@ -45,6 +45,7 @@ import com.example.spring_profiler_app.ui.components.UIStateWrapper
 fun BeansScreen(beansState: UIState<BeansResponse>) {
     UIStateWrapper(
         state = beansState,
+        loadingMessage = "Loading beans..."
     ) { data ->
         BeansContent(data)
     }

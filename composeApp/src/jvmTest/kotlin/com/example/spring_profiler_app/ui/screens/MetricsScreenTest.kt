@@ -27,7 +27,9 @@ class MetricsScreenTest {
         }
 
         // Then
-        onNodeWithText("Loading...").assertIsDisplayed()
+        waitForIdle()
+        mainClock.advanceTimeBy(100)
+        onNodeWithText("Loading metrics...").assertExists()
     }
 
     @Test

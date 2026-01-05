@@ -27,7 +27,9 @@ class BeansScreenTest {
         }
 
         // Then
-        onNodeWithText("Loading...").assertIsDisplayed()
+        waitForIdle()
+        mainClock.advanceTimeBy(100)
+        onNodeWithText("Loading beans...").assertExists()
     }
 
     @Test

@@ -368,7 +368,7 @@ class StateTest {
         val updatedState = stateMap[testServer]
         assertIs<UIState.Success<BeansResponse>>(updatedState?.beans)
         assertEquals(initialBeansResponse, (updatedState?.beans as UIState.Success).data)
-        assertIs<UIState.Success<HealthResponse>>(updatedState?.health)
+        assertIs<UIState.Success<HealthResponse>>(updatedState.health)
     }
 
     @Test
@@ -395,4 +395,102 @@ class StateTest {
         assertIs<UIState.Success<ConfigPropsResponse>>(updatedState?.configProps)
         assertIs<UIState.Success<MetricsResponse>>(updatedState?.metrics)
     }
+
+    @Test
+    fun `refreshHealthState with showLoadingOnRefresh=false should not set Loading state when current state is Success`() =
+        runTest {
+            // Given
+            val initialHealthResponse = HealthResponse(status = "UP", components = null)
+            stateMap[testServer] = stateMap[testServer]!!.copy(
+                health = UIState.Success(initialHealthResponse)
+            )
+
+            val newHealthResponse = HealthResponse(status = "DOWN", components = null)
+            coEvery { mockRepository.getHealth(testServer) } returns newHealthResponse
+
+            // When
+            stateMap.refreshHealthState(testServer, mockRepository, showLoadingOnRefresh = false)
+            advanceUntilIdle()
+
+            // Then
+            val updatedState = stateMap[testServer]
+            assertIs<UIState.Success<HealthResponse>>(updatedState?.health)
+            assertEquals(newHealthResponse, (updatedState?.health as UIState.Success).data)
+            coVerify(exactly = 1) { mockRepository.getHealth(testServer) }
+        }
+
+    @Test
+    fun `refreshHealthState with showLoadingOnRefresh=true should set Loading state before fetching`() = runTest {
+        // Given
+        val initialHealthResponse = HealthResponse(status = "UP", components = null)
+        stateMap[testServer] = stateMap[testServer]!!.copy(
+            health = UIState.Success(initialHealthResponse)
+        )
+
+        val newHealthResponse = HealthResponse(status = "DOWN", components = null)
+        coEvery { mockRepository.getHealth(testServer) } returns newHealthResponse
+
+        // When
+        stateMap.refreshHealthState(testServer, mockRepository, showLoadingOnRefresh = true)
+        advanceUntilIdle()
+
+        // Then
+        val updatedState = stateMap[testServer]
+        assertIs<UIState.Success<HealthResponse>>(updatedState?.health)
+        assertEquals(newHealthResponse, (updatedState?.health as UIState.Success).data)
+        coVerify(exactly = 1) { mockRepository.getHealth(testServer) }
+    }
+
+    @Test
+    fun `refreshMetricsState with showLoadingOnRefresh=false should not set Loading state when current state is Success`() =
+        runTest {
+            // Given
+            val initialMetricsResponse = MetricsResponse(metrics = emptyList())
+            stateMap[testServer] = stateMap[testServer]!!.copy(
+                metrics = UIState.Success(initialMetricsResponse)
+            )
+
+            val newMetricsResponse = MetricsResponse(
+                metrics = listOf(
+                    Metric(
+                        name = "jvm.memory.used",
+                        measurements = listOf(Measurement(statistic = "VALUE", value = 999.0)),
+                        unit = "bytes"
+                    )
+                )
+            )
+            coEvery { mockRepository.getMetrics(testServer) } returns newMetricsResponse
+
+            // When
+            stateMap.refreshMetricsState(testServer, mockRepository, showLoadingOnRefresh = false)
+            advanceUntilIdle()
+
+            // Then
+            val updatedState = stateMap[testServer]
+            assertIs<UIState.Success<MetricsResponse>>(updatedState?.metrics)
+            assertEquals(newMetricsResponse, (updatedState?.metrics as UIState.Success).data)
+            coVerify(exactly = 1) { mockRepository.getMetrics(testServer) }
+        }
+
+    @Test
+    fun `refreshBeansState with showLoadingOnRefresh=false should not set Loading state when current state is Error`() =
+        runTest {
+            // Given
+            stateMap[testServer] = stateMap[testServer]!!.copy(
+                beans = UIState.Error("Previous error")
+            )
+
+            val beansResponse = BeansResponse(contexts = emptyMap())
+            coEvery { mockRepository.getBeans(testServer) } returns beansResponse
+
+            // When
+            stateMap.refreshBeansState(testServer, mockRepository, showLoadingOnRefresh = false)
+            advanceUntilIdle()
+
+            // Then
+            val updatedState = stateMap[testServer]
+            assertIs<UIState.Success<BeansResponse>>(updatedState?.beans)
+            assertEquals(beansResponse, (updatedState?.beans as UIState.Success).data)
+            coVerify(exactly = 1) { mockRepository.getBeans(testServer) }
+        }
 }

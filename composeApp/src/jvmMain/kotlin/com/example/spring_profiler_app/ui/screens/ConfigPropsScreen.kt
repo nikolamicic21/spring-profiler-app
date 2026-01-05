@@ -41,6 +41,7 @@ import com.example.spring_profiler_app.ui.components.UIStateWrapper
 fun ConfigPropsScreen(configPropsState: UIState<ConfigPropsResponse>) {
     UIStateWrapper(
         state = configPropsState,
+        loadingMessage = "Loading configuration properties..."
     ) { data ->
         ConfigPropsContent(data)
     }

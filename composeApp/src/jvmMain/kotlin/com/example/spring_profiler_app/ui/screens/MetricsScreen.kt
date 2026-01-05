@@ -40,10 +40,13 @@ fun MetricsScreen(
     metricsState: UIState<MetricsResponse>,
     refreshMetricsCallback: suspend () -> Unit
 ) {
-    AutoRefresh(interval = 3.seconds, onRefresh = refreshMetricsCallback)
+    val autoRefreshInterval = 3.seconds
+    AutoRefresh(interval = autoRefreshInterval, onRefresh = refreshMetricsCallback)
 
     UIStateWrapper(
         state = metricsState,
+        loadingMessage = "Loading metrics...",
+        autoRefreshInterval = autoRefreshInterval
     ) { data ->
         MetricsContent(data)
     }

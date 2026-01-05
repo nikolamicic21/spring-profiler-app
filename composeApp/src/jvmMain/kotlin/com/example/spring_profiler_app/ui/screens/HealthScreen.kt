@@ -47,10 +47,13 @@ fun HealthScreen(
     healthState: UIState<HealthResponse>,
     refreshHealthCallback: suspend () -> Unit
 ) {
-    AutoRefresh(interval = 5.seconds, onRefresh = refreshHealthCallback)
+    val autoRefreshInterval = 5.seconds
+    AutoRefresh(interval = autoRefreshInterval, onRefresh = refreshHealthCallback)
 
     UIStateWrapper(
         state = healthState,
+        loadingMessage = "Loading health status...",
+        autoRefreshInterval = autoRefreshInterval
     ) { data ->
         HealthContent(data)
     }

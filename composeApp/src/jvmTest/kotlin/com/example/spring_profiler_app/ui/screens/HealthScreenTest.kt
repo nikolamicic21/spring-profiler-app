@@ -25,7 +25,9 @@ class HealthScreenTest {
         }
 
         // Then
-        onNodeWithText("Loading...").assertIsDisplayed()
+        waitForIdle()
+        mainClock.advanceTimeBy(100)
+        onNodeWithText("Loading health status...").assertExists()
     }
 
     @Test
