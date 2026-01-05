@@ -58,7 +58,7 @@ fun HealthScreen(
 
 @Composable
 private fun HealthContent(healthResponse: HealthResponse) {
-    val filteredComponents = healthResponse.components?.toList() ?: emptyList()
+    val components = healthResponse.components?.toList() ?: emptyList()
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         LazyVerticalGrid(
@@ -74,17 +74,18 @@ private fun HealthContent(healthResponse: HealthResponse) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 GlobalHealthHero(healthResponse.status)
             }
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = "System Components",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-
-            items(filteredComponents) { (name, component) ->
-                ComponentStatusCard(name, component.status)
+            if (components.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = "System Components",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+                items(components) { (name, component) ->
+                    ComponentStatusCard(name, component.status)
+                }
             }
         }
     }
