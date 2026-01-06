@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,21 +64,21 @@ private fun HealthContent(healthResponse: HealthResponse) {
     val components = healthResponse.components?.toList() ?: emptyList()
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 240.dp),
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 top = 16.dp,
                 start = 16.dp, end = 16.dp, bottom = 16.dp
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalItemSpacing = 12.dp,
         ) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
+            item(span = StaggeredGridItemSpan.FullLine) {
                 GlobalHealthHero(healthResponse.status)
             }
             if (components.isNotEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
+                item(span = StaggeredGridItemSpan.FullLine) {
                     Text(
                         text = "System Components",
                         style = MaterialTheme.typography.titleSmall,

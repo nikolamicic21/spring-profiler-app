@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -70,15 +70,15 @@ private fun BeansContent(beansResponse: BeansResponse) {
         if (filteredBeans.isEmpty()) {
             EmptyState(message = "No bean names match your search.")
         } else {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 450.dp),
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Adaptive(minSize = 450.dp),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     top = searchBarHeight + 16.dp,
                     start = 16.dp, end = 16.dp, bottom = 16.dp
                 ),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalItemSpacing = 16.dp
             ) {
                 items(filteredBeans) { (name, bean) ->
                     BeanCard(
