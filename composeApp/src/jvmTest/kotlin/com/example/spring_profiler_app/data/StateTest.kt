@@ -493,4 +493,305 @@ class StateTest {
             assertEquals(beansResponse, (updatedState?.beans as UIState.Success).data)
             coVerify(exactly = 1) { mockRepository.getBeans(testServer) }
         }
+
+    @Test
+    fun `refreshGroupBeansState should update state to Success when repository call succeeds`() = runTest {
+        // Given
+        val server1 = Server(Url("http://localhost:8080/actuator"))
+        val server2 = Server(Url("http://localhost:8081/actuator"))
+        val group = ServerGroup(name = "test-group", endpoints = listOf(server1, server2))
+
+        val groupStateMap = SnapshotStateMap<ServerGroup, ServerGroupState>()
+        groupStateMap[group] = ServerGroupState(
+            group = group,
+            endpointStates = mapOf(
+                server1 to ServerState(
+                    server = server1,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                ),
+                server2 to ServerState(
+                    server = server2,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                )
+            )
+        )
+
+        val beansResponse = BeansResponse(
+            contexts = mapOf(
+                "application" to Beans(
+                    beans = mapOf("testBean" to Bean(dependencies = listOf("dep1"), scope = "singleton"))
+                )
+            )
+        )
+        coEvery { mockRepository.getBeans(server1) } returns beansResponse
+
+        // When
+        groupStateMap.refreshGroupBeansState(group, server1, mockRepository)
+        advanceUntilIdle()
+
+        // Then
+        val updatedGroupState = groupStateMap[group]
+        val updatedServerState = updatedGroupState?.endpointStates?.get(server1)
+        assertIs<UIState.Success<BeansResponse>>(updatedServerState?.beans)
+        assertEquals(beansResponse, (updatedServerState?.beans as UIState.Success).data)
+        coVerify(exactly = 1) { mockRepository.getBeans(server1) }
+    }
+
+    @Test
+    fun `refreshGroupBeansState should update state to Error when repository call fails`() = runTest {
+        // Given
+        val server1 = Server(Url("http://localhost:8080/actuator"))
+        val group = ServerGroup(name = "test-group", endpoints = listOf(server1))
+
+        val groupStateMap = SnapshotStateMap<ServerGroup, ServerGroupState>()
+        groupStateMap[group] = ServerGroupState(
+            group = group,
+            endpointStates = mapOf(
+                server1 to ServerState(
+                    server = server1,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                )
+            )
+        )
+
+        val exception = mockk<ClientRequestException>()
+        val response = mockk<io.ktor.client.statement.HttpResponse>()
+        every { exception.response } returns response
+        every { response.status } returns HttpStatusCode.NotFound
+        coEvery { mockRepository.getBeans(server1) } throws exception
+
+        // When
+        groupStateMap.refreshGroupBeansState(group, server1, mockRepository)
+        advanceUntilIdle()
+
+        // Then
+        val updatedGroupState = groupStateMap[group]
+        val updatedServerState = updatedGroupState?.endpointStates?.get(server1)
+        assertIs<UIState.Error>(updatedServerState?.beans)
+        coVerify(exactly = 1) { mockRepository.getBeans(server1) }
+    }
+
+    @Test
+    fun `refreshGroupHealthState should update state to Success when repository call succeeds`() = runTest {
+        // Given
+        val server1 = Server(Url("http://localhost:8080/actuator"))
+        val group = ServerGroup(name = "test-group", endpoints = listOf(server1))
+
+        val groupStateMap = SnapshotStateMap<ServerGroup, ServerGroupState>()
+        groupStateMap[group] = ServerGroupState(
+            group = group,
+            endpointStates = mapOf(
+                server1 to ServerState(
+                    server = server1,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                )
+            )
+        )
+
+        val healthResponse = HealthResponse(status = "UP", components = emptyMap())
+        coEvery { mockRepository.getHealth(server1) } returns healthResponse
+
+        // When
+        groupStateMap.refreshGroupHealthState(group, server1, mockRepository)
+        advanceUntilIdle()
+
+        // Then
+        val updatedGroupState = groupStateMap[group]
+        val updatedServerState = updatedGroupState?.endpointStates?.get(server1)
+        assertIs<UIState.Success<HealthResponse>>(updatedServerState?.health)
+        assertEquals(healthResponse, (updatedServerState?.health as UIState.Success).data)
+        coVerify(exactly = 1) { mockRepository.getHealth(server1) }
+    }
+
+    @Test
+    fun `refreshGroupConfigPropsState should update state to Success when repository call succeeds`() = runTest {
+        // Given
+        val server1 = Server(Url("http://localhost:8080/actuator"))
+        val group = ServerGroup(name = "test-group", endpoints = listOf(server1))
+
+        val groupStateMap = SnapshotStateMap<ServerGroup, ServerGroupState>()
+        groupStateMap[group] = ServerGroupState(
+            group = group,
+            endpointStates = mapOf(
+                server1 to ServerState(
+                    server = server1,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                )
+            )
+        )
+
+        val configPropsResponse = ConfigPropsResponse(contexts = emptyMap())
+        coEvery { mockRepository.getConfigProps(server1) } returns configPropsResponse
+
+        // When
+        groupStateMap.refreshGroupConfigPropsState(group, server1, mockRepository)
+        advanceUntilIdle()
+
+        // Then
+        val updatedGroupState = groupStateMap[group]
+        val updatedServerState = updatedGroupState?.endpointStates?.get(server1)
+        assertIs<UIState.Success<ConfigPropsResponse>>(updatedServerState?.configProps)
+        assertEquals(configPropsResponse, (updatedServerState?.configProps as UIState.Success).data)
+        coVerify(exactly = 1) { mockRepository.getConfigProps(server1) }
+    }
+
+    @Test
+    fun `refreshGroupMetricsState should update state to Success when repository call succeeds`() = runTest {
+        // Given
+        val server1 = Server(Url("http://localhost:8080/actuator"))
+        val group = ServerGroup(name = "test-group", endpoints = listOf(server1))
+
+        val groupStateMap = SnapshotStateMap<ServerGroup, ServerGroupState>()
+        groupStateMap[group] = ServerGroupState(
+            group = group,
+            endpointStates = mapOf(
+                server1 to ServerState(
+                    server = server1,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                )
+            )
+        )
+
+        val metricsResponse = MetricsResponse(metrics = emptyList())
+        coEvery { mockRepository.getMetrics(server1) } returns metricsResponse
+
+        // When
+        groupStateMap.refreshGroupMetricsState(group, server1, mockRepository)
+        advanceUntilIdle()
+
+        // Then
+        val updatedGroupState = groupStateMap[group]
+        val updatedServerState = updatedGroupState?.endpointStates?.get(server1)
+        assertIs<UIState.Success<MetricsResponse>>(updatedServerState?.metrics)
+        assertEquals(metricsResponse, (updatedServerState?.metrics as UIState.Success).data)
+        coVerify(exactly = 1) { mockRepository.getMetrics(server1) }
+    }
+
+    @Test
+    fun `refreshGroupState should refresh all endpoints in parallel`() = runTest {
+        // Given
+        val server1 = Server(Url("http://localhost:8080/actuator"))
+        val server2 = Server(Url("http://localhost:8081/actuator"))
+        val group = ServerGroup(name = "test-group", endpoints = listOf(server1, server2))
+
+        val groupStateMap = SnapshotStateMap<ServerGroup, ServerGroupState>()
+        groupStateMap[group] = ServerGroupState(
+            group = group,
+            endpointStates = mapOf(
+                server1 to ServerState(
+                    server = server1,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                ),
+                server2 to ServerState(
+                    server = server2,
+                    beans = UIState.Loading,
+                    health = UIState.Loading,
+                    configProps = UIState.Loading,
+                    metrics = UIState.Loading
+                )
+            )
+        )
+
+        val beansResponse = BeansResponse(contexts = emptyMap())
+        val healthResponse = HealthResponse(status = "UP", components = emptyMap())
+        val configPropsResponse = ConfigPropsResponse(contexts = emptyMap())
+        val metricsResponse = MetricsResponse(metrics = emptyList())
+
+        coEvery { mockRepository.getBeans(any()) } returns beansResponse
+        coEvery { mockRepository.getHealth(any()) } returns healthResponse
+        coEvery { mockRepository.getConfigProps(any()) } returns configPropsResponse
+        coEvery { mockRepository.getMetrics(any()) } returns metricsResponse
+
+        // When
+        groupStateMap.refreshGroupState(group, mockRepository)
+        advanceUntilIdle()
+
+        // Then
+        coVerify(exactly = 1) { mockRepository.getBeans(server1) }
+        coVerify(exactly = 1) { mockRepository.getBeans(server2) }
+        coVerify(exactly = 1) { mockRepository.getHealth(server1) }
+        coVerify(exactly = 1) { mockRepository.getHealth(server2) }
+        coVerify(exactly = 1) { mockRepository.getConfigProps(server1) }
+        coVerify(exactly = 1) { mockRepository.getConfigProps(server2) }
+        coVerify(exactly = 1) { mockRepository.getMetrics(server1) }
+        coVerify(exactly = 1) { mockRepository.getMetrics(server2) }
+
+        val updatedGroupState = groupStateMap[group]
+        val server1State = updatedGroupState?.endpointStates?.get(server1)
+        val server2State = updatedGroupState?.endpointStates?.get(server2)
+
+        assertIs<UIState.Success<BeansResponse>>(server1State?.beans)
+        assertIs<UIState.Success<HealthResponse>>(server1State?.health)
+        assertIs<UIState.Success<ConfigPropsResponse>>(server1State?.configProps)
+        assertIs<UIState.Success<MetricsResponse>>(server1State?.metrics)
+
+        assertIs<UIState.Success<BeansResponse>>(server2State?.beans)
+        assertIs<UIState.Success<HealthResponse>>(server2State?.health)
+        assertIs<UIState.Success<ConfigPropsResponse>>(server2State?.configProps)
+        assertIs<UIState.Success<MetricsResponse>>(server2State?.metrics)
+    }
+
+    @Test
+    fun `refreshGroupBeansState should not show loading when showLoadingOnRefresh is false and state is Success`() =
+        runTest {
+            // Given
+            val server1 = Server(Url("http://localhost:8080/actuator"))
+            val group = ServerGroup(name = "test-group", endpoints = listOf(server1))
+
+            val existingBeansResponse = BeansResponse(contexts = emptyMap())
+            val groupStateMap = SnapshotStateMap<ServerGroup, ServerGroupState>()
+            groupStateMap[group] = ServerGroupState(
+                group = group,
+                endpointStates = mapOf(
+                    server1 to ServerState(
+                        server = server1,
+                        beans = UIState.Success(existingBeansResponse),
+                        health = UIState.Loading,
+                        configProps = UIState.Loading,
+                        metrics = UIState.Loading
+                    )
+                )
+            )
+
+            val newBeansResponse = BeansResponse(
+                contexts = mapOf(
+                    "application" to Beans(
+                        beans = mapOf("newBean" to Bean(dependencies = emptyList(), scope = "singleton"))
+                    )
+                )
+            )
+            coEvery { mockRepository.getBeans(server1) } returns newBeansResponse
+
+            // When
+            groupStateMap.refreshGroupBeansState(group, server1, mockRepository, showLoadingOnRefresh = false)
+            advanceUntilIdle()
+
+            // Then
+            val updatedGroupState = groupStateMap[group]
+            val updatedServerState = updatedGroupState?.endpointStates?.get(server1)
+            assertIs<UIState.Success<BeansResponse>>(updatedServerState?.beans)
+            assertEquals(newBeansResponse, (updatedServerState?.beans as UIState.Success).data)
+            coVerify(exactly = 1) { mockRepository.getBeans(server1) }
+        }
 }

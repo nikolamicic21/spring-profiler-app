@@ -7,8 +7,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
+import com.example.spring_profiler_app.data.AggregatedConfigPropsResponse
 import com.example.spring_profiler_app.data.BeanProperties
-import com.example.spring_profiler_app.data.ConfigPropsResponse
 import com.example.spring_profiler_app.data.Context
 import com.example.spring_profiler_app.data.UIState
 import kotlinx.serialization.json.JsonObject
@@ -21,7 +21,7 @@ class ConfigPropsScreenTest {
     @Test
     fun `ConfigPropsScreen should display loading state`() = runComposeUiTest {
         // Given
-        val configPropsState: UIState<ConfigPropsResponse> = UIState.Loading
+        val configPropsState: UIState<AggregatedConfigPropsResponse> = UIState.Loading
 
         // When
         setContent {
@@ -38,7 +38,7 @@ class ConfigPropsScreenTest {
     fun `ConfigPropsScreen should display error state`() = runComposeUiTest {
         // Given
         val errorMessage = "Failed to fetch configuration properties"
-        val configPropsState: UIState<ConfigPropsResponse> = UIState.Error(errorMessage)
+        val configPropsState: UIState<AggregatedConfigPropsResponse> = UIState.Error(errorMessage)
 
         // When
         setContent {
@@ -55,7 +55,11 @@ class ConfigPropsScreenTest {
         val properties = JsonObject(mapOf("port" to JsonPrimitive(8080)))
         val beanProperties = BeanProperties(prefix = "server", properties = properties)
         val context = Context(beans = mapOf("serverProperties" to beanProperties))
-        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
+            contexts = mapOf("application" to context)
+        )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -70,7 +74,7 @@ class ConfigPropsScreenTest {
     @Test
     fun `ConfigPropsScreen should display empty state when no properties`() = runComposeUiTest {
         // Given
-        val configPropsResponse = ConfigPropsResponse(contexts = emptyMap())
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = emptyList())
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -79,7 +83,7 @@ class ConfigPropsScreenTest {
         }
 
         // Then
-        onNodeWithText("No configuration prefixes match your search.").assertIsDisplayed()
+        onNodeWithText("No configuration properties match your filters.").assertIsDisplayed()
     }
 
     @Test
@@ -95,9 +99,11 @@ class ConfigPropsScreenTest {
         val context = Context(
             beans = mapOf("serverProperties" to beanProperties)
         )
-        val configPropsResponse = ConfigPropsResponse(
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
             contexts = mapOf("application" to context)
         )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -127,9 +133,11 @@ class ConfigPropsScreenTest {
         val context = Context(
             beans = mapOf("serverProperties" to beanProperties)
         )
-        val configPropsResponse = ConfigPropsResponse(
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
             contexts = mapOf("application" to context)
         )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -166,9 +174,11 @@ class ConfigPropsScreenTest {
         val context = Context(
             beans = mapOf("serverProperties" to beanProperties)
         )
-        val configPropsResponse = ConfigPropsResponse(
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
             contexts = mapOf("application" to context)
         )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -201,9 +211,11 @@ class ConfigPropsScreenTest {
                 "managementProperties" to managementBean
             )
         )
-        val configPropsResponse = ConfigPropsResponse(
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
             contexts = mapOf("application" to context)
         )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -231,7 +243,11 @@ class ConfigPropsScreenTest {
                 "datasourceProperties" to datasourceBean
             )
         )
-        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
+            contexts = mapOf("application" to context)
+        )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -254,7 +270,11 @@ class ConfigPropsScreenTest {
         val properties = JsonObject(mapOf("port" to JsonPrimitive(8080)))
         val beanProperties = BeanProperties(prefix = "server", properties = properties)
         val context = Context(beans = mapOf("serverProperties" to beanProperties))
-        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
+            contexts = mapOf("application" to context)
+        )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -278,7 +298,11 @@ class ConfigPropsScreenTest {
         val properties = JsonObject(mapOf("port" to JsonPrimitive(8080)))
         val beanProperties = BeanProperties(prefix = "server", properties = properties)
         val context = Context(beans = mapOf("serverProperties" to beanProperties))
-        val configPropsResponse = ConfigPropsResponse(contexts = mapOf("application" to context))
+        val endpointConfigProps = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "localhost:8080",
+            contexts = mapOf("application" to context)
+        )
+        val configPropsResponse = AggregatedConfigPropsResponse(endpoints = listOf(endpointConfigProps))
         val configPropsState = UIState.Success(configPropsResponse)
 
         // When
@@ -291,6 +315,81 @@ class ConfigPropsScreenTest {
         waitForIdle()
 
         // Then
-        onNodeWithText("No configuration prefixes match your search.").assertIsDisplayed()
+        onNodeWithText("No configuration properties match your filters.").assertIsDisplayed()
+    }
+
+    @Test
+    fun `ConfigPropsScreen should display config props from multiple endpoints`() = runComposeUiTest {
+        // Given
+        val endpoint1 = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "prod-server-1",
+            contexts = mapOf(
+                "application" to Context(
+                    beans = mapOf(
+                        "serverProperties" to BeanProperties(
+                            prefix = "server",
+                            properties = JsonObject(
+                                mapOf(
+                                    "port" to JsonPrimitive(8080),
+                                    "address" to JsonPrimitive("0.0.0.0")
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        val endpoint2 = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "prod-server-2",
+            contexts = mapOf(
+                "application" to Context(
+                    beans = mapOf(
+                        "serverProperties" to BeanProperties(
+                            prefix = "server",
+                            properties = JsonObject(
+                                mapOf(
+                                    "port" to JsonPrimitive(8081),
+                                    "address" to JsonPrimitive("0.0.0.0")
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        val endpoint3 = AggregatedConfigPropsResponse.EndpointConfigProps(
+            endpoint = "staging-server",
+            contexts = mapOf(
+                "application" to Context(
+                    beans = mapOf(
+                        "serverProperties" to BeanProperties(
+                            prefix = "server",
+                            properties = JsonObject(
+                                mapOf(
+                                    "port" to JsonPrimitive(9000)
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        val configPropsResponse = AggregatedConfigPropsResponse(
+            endpoints = listOf(endpoint1, endpoint2, endpoint3)
+        )
+        val configPropsState = UIState.Success(configPropsResponse)
+
+        // When
+        setContent {
+            ConfigPropsScreen(configPropsState = configPropsState)
+        }
+
+        waitForIdle()
+
+        // Then
+        onNodeWithText("prod-server-1").assertIsDisplayed()
+        onNodeWithText("prod-server-2").assertIsDisplayed()
+        onNodeWithText("staging-server").assertIsDisplayed()
     }
 }

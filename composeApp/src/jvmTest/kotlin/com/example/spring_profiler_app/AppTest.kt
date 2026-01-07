@@ -49,7 +49,7 @@ class AppTest {
     }
 
     @Test
-    fun `App should display Servers title`() = runComposeUiTest {
+    fun `App should display Server Groups title`() = runComposeUiTest {
         // When
         setContent {
             CompositionLocalProvider(
@@ -61,11 +61,11 @@ class AppTest {
         }
 
         // Then
-        onNodeWithText("Servers").assertIsDisplayed()
+        onNodeWithText("Server Groups").assertIsDisplayed()
     }
 
     @Test
-    fun `App should display Add a new server button`() = runComposeUiTest {
+    fun `App should display Add a new group button`() = runComposeUiTest {
         // When
         setContent {
             CompositionLocalProvider(
@@ -77,11 +77,11 @@ class AppTest {
         }
 
         // Then
-        onNodeWithText("Add a new server").assertIsDisplayed()
+        onNodeWithText("Add a new group").assertIsDisplayed()
     }
 
     @Test
-    fun `App should display AddServerForm when no servers are added`() = runComposeUiTest {
+    fun `App should display AddServerGroupForm when no server groups are added`() = runComposeUiTest {
         // When
         setContent {
             CompositionLocalProvider(
@@ -93,12 +93,13 @@ class AppTest {
         }
 
         // Then
-        onNodeWithText("Server's actuator endpoint (URL)").assertIsDisplayed()
-        onNodeWithText("Connect").assertIsDisplayed()
+        onNodeWithText("Add Server Group").assertIsDisplayed()
+        onNodeWithText("Group Name").assertIsDisplayed()
+        onNodeWithText("Connect Group").assertIsDisplayed()
     }
 
     @Test
-    fun `App should display AddServerForm when no server is selected`() = runComposeUiTest {
+    fun `App should display AddServerGroupForm when no server group is selected`() = runComposeUiTest {
         // When
         setContent {
             CompositionLocalProvider(
@@ -110,7 +111,8 @@ class AppTest {
         }
 
         // Then
-        onNodeWithText("Server's actuator endpoint (URL)").assertIsDisplayed()
+        onNodeWithText("Add Server Group").assertIsDisplayed()
+        onNodeWithText("Group Name").assertIsDisplayed()
     }
 
     private fun createMockClient(): HttpClient {

@@ -68,7 +68,7 @@ kover {
                 classes("*\$\$serializer")
 
                 // Exclude main function
-                packages("com.example.spring_profiler_app.MainKt")
+                classes("com.example.spring_profiler_app.Main*")
 
                 // Exclude generated packages
                 packages("spring_profiler_app.composeapp.generated*")
@@ -80,7 +80,7 @@ kover {
 
         verify {
             rule {
-                minBound(70)
+                minBound(80)
             }
         }
     }

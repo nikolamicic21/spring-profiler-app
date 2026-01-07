@@ -4,11 +4,16 @@ import io.ktor.http.Url
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import java.util.*
 
 sealed class UIState<out T> {
     data object Loading : UIState<Nothing>()
     data class Error(val message: String) : UIState<Nothing>()
     data class Success<T>(val data: T) : UIState<T>()
+    data class PartialSuccess<T>(
+        val data: T,
+        val warnings: List<String>,
+    ) : UIState<T>()
 }
 
 data class ServerState(
@@ -17,6 +22,17 @@ data class ServerState(
     val health: UIState<HealthResponse>,
     val configProps: UIState<ConfigPropsResponse>,
     val metrics: UIState<MetricsResponse>,
+)
+
+data class ServerGroup(
+    val id: String = UUID.randomUUID().toString(),
+    val name: String,
+    val endpoints: List<Server>,
+)
+
+data class ServerGroupState(
+    val group: ServerGroup,
+    val endpointStates: Map<Server, ServerState>,
 )
 
 enum class ActuatorEndpoints(val title: String) {
@@ -41,6 +57,15 @@ data class Bean(
     val scope: String,
 )
 
+data class AggregatedBeansResponse(
+    val endpoints: List<EndpointBeans>,
+) {
+    data class EndpointBeans(
+        val endpoint: String,
+        val contexts: Map<String, Beans>,
+    )
+}
+
 @Serializable
 data class HealthResponse(
     val status: String, val components: Map<String, Component>? = null
@@ -49,6 +74,17 @@ data class HealthResponse(
     @Serializable
     data class Component(
         val status: String,
+    )
+}
+
+data class AggregatedHealthResponse(
+    val status: String,
+    val endpoints: List<EndpointHealth>,
+) {
+    data class EndpointHealth(
+        val endpoint: String,
+        val status: String,
+        val components: Map<String, String>,
     )
 }
 
@@ -67,6 +103,15 @@ data class BeanProperties(
     val prefix: String,
     val properties: JsonObject
 )
+
+data class AggregatedConfigPropsResponse(
+    val endpoints: List<EndpointConfigProps>,
+) {
+    data class EndpointConfigProps(
+        val endpoint: String,
+        val contexts: Map<String, Context>,
+    )
+}
 
 fun flattenConfigPropsObject(
     obj: JsonObject,
@@ -116,7 +161,16 @@ data class Measurement(val statistic: String, val value: Double)
 data class Metric(
     val name: String,
     val measurements: List<Measurement>,
-    val unit: String?
+    val unit: String?,
 )
 
 data class MetricsResponse(val metrics: List<Metric>)
+
+data class AggregatedMetricsResponse(
+    val endpoints: List<EndpointMetrics>,
+) {
+    data class EndpointMetrics(
+        val endpoint: String,
+        val metrics: List<Metric>,
+    )
+}

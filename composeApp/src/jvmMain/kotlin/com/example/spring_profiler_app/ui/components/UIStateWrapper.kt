@@ -71,6 +71,13 @@ fun <T> UIStateWrapper(
             is UIState.Success -> {
                 content(state.data)
             }
+
+            is UIState.PartialSuccess -> {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    PartialDataWarning(warnings = state.warnings)
+                    content(state.data)
+                }
+            }
         }
     }
 }

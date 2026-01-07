@@ -30,17 +30,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.Server
-import com.example.spring_profiler_app.data.ServerState
+import com.example.spring_profiler_app.data.ServerGroup
+import com.example.spring_profiler_app.data.ServerGroupState
 
 @Composable
-fun ServerListPanel(
-    servers: Map<Server, ServerState>,
-    currentServerKey: Server?,
-    onAddServerClick: () -> Unit,
-    onServerSelect: (Server) -> Unit,
-    onRefreshServer: (Server) -> Unit,
-    onDeleteServer: (Server) -> Unit,
+fun ServerGroupListPanel(
+    serverGroups: Map<ServerGroup, ServerGroupState>,
+    currentGroupKey: ServerGroup?,
+    onAddGroupClick: () -> Unit,
+    onGroupSelect: (ServerGroup) -> Unit,
+    onRefreshGroup: (ServerGroup) -> Unit,
+    onDeleteGroup: (ServerGroup) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxHeight()) {
@@ -52,7 +52,7 @@ fun ServerListPanel(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Servers",
+                text = "Server Groups",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -71,17 +71,17 @@ fun ServerListPanel(
                     Modifier.padding(10.dp).fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Button(onClick = onAddServerClick) {
-                        Text("Add a new server")
+                    Button(onClick = onAddGroupClick) {
+                        Text("Add a new group")
                     }
                 }
-                servers.keys.toList().forEach { server ->
-                    ServerListItem(
-                        server = server,
-                        isSelected = currentServerKey == server,
-                        onSelect = { onServerSelect(server) },
-                        onRefresh = { onRefreshServer(server) },
-                        onDelete = { onDeleteServer(server) },
+                serverGroups.keys.toList().forEach { group ->
+                    ServerGroupListItem(
+                        group = group,
+                        isSelected = currentGroupKey == group,
+                        onSelect = { onGroupSelect(group) },
+                        onRefresh = { onRefreshGroup(group) },
+                        onDelete = { onDeleteGroup(group) },
                     )
                 }
             }
@@ -94,8 +94,8 @@ fun ServerListPanel(
 }
 
 @Composable
-private fun ServerListItem(
-    server: Server,
+private fun ServerGroupListItem(
+    group: ServerGroup,
     isSelected: Boolean,
     onSelect: () -> Unit,
     onRefresh: () -> Unit,
@@ -114,33 +114,47 @@ private fun ServerListItem(
                     colors = CardDefaults.cardColors(containerColor = color),
                     modifier = Modifier.clickable(onClick = onSelect)
                 ) {
-                    Column(modifier = Modifier.padding(10.dp).fillMaxWidth()) {
-                        Text(text = "${server.url.host}:${server.url.port}")
+                    Row(
+                        modifier = Modifier.padding(10.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = group.name,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${group.endpoints.size} endpoint${if (group.endpoints.size != 1) "s" else ""}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                        Row {
+                            Column {
+                                IconButton(onClick = onRefresh) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Refresh data",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                IconButton(onClick = onDelete) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete group",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
+
                     }
-                }
-            }
-            Box(
-                modifier = Modifier.padding(2.dp).weight(0.15f),
-                contentAlignment = Alignment.Center
-            ) {
-                IconButton(onClick = onRefresh) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh data",
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-            Box(
-                modifier = Modifier.padding(2.dp).weight(0.15f),
-                contentAlignment = Alignment.Center
-            ) {
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete server",
-                        modifier = Modifier.size(24.dp)
-                    )
                 }
             }
         }

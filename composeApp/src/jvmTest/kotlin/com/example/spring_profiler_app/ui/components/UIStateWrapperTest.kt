@@ -199,4 +199,118 @@ class UIStateWrapperTest {
         onNodeWithText("Something went wrong").assertIsDisplayed()
         onNodeWithText("Network error").assertIsDisplayed()
     }
+
+    @Test
+    fun `UIStateWrapper should display content and warning for PartialSuccess state`() = runComposeUiTest {
+        // Given
+        val successData = "Partial data loaded"
+        val warnings = listOf("localhost:8080 - Connection failed", "localhost:8081 - Timeout")
+        val partialSuccessState = UIState.PartialSuccess(data = successData, warnings = warnings)
+
+        // When
+        setContent {
+            UIStateWrapper(state = partialSuccessState) { data ->
+                Text(text = data)
+            }
+        }
+
+        // Then
+        onNodeWithText(successData).assertIsDisplayed()
+        onNodeWithText("Partial Data Available").assertIsDisplayed()
+        onNodeWithText("• localhost:8080 - Connection failed").assertIsDisplayed()
+        onNodeWithText("• localhost:8081 - Timeout").assertIsDisplayed()
+    }
+
+    @Test
+    fun `UIStateWrapper should display all warnings for PartialSuccess state`() = runComposeUiTest {
+        // Given
+        data class TestData(val value: String)
+
+        val testData = TestData("Test Value")
+        val warnings = listOf(
+            "localhost:8080 - Error 1",
+            "localhost:8081 - Error 2",
+            "localhost:8082 - Still loading..."
+        )
+        val partialSuccessState = UIState.PartialSuccess(data = testData, warnings = warnings)
+
+        // When
+        setContent {
+            UIStateWrapper(state = partialSuccessState) { data ->
+                Text(text = data.value)
+            }
+        }
+
+        // Then
+        onNodeWithText("Test Value").assertIsDisplayed()
+        onNodeWithText("Partial Data Available").assertIsDisplayed()
+        onNodeWithText("• localhost:8080 - Error 1").assertIsDisplayed()
+        onNodeWithText("• localhost:8081 - Error 2").assertIsDisplayed()
+        onNodeWithText("• localhost:8082 - Still loading...").assertIsDisplayed()
+    }
+
+    @Test
+    fun `UIStateWrapper should display PartialDataWarning component for PartialSuccess state`() = runComposeUiTest {
+        // Given
+        val partialSuccessState = UIState.PartialSuccess(
+            data = "Data",
+            warnings = listOf("Warning message")
+        )
+
+        // When
+        setContent {
+            UIStateWrapper(state = partialSuccessState) { data ->
+                Text(text = data)
+            }
+        }
+
+        // Then
+        onNodeWithText("Partial Data Available").assertIsDisplayed()
+        onNodeWithText("Some endpoints failed or are still loading:").assertIsDisplayed()
+        onNodeWithText("• Warning message").assertIsDisplayed()
+    }
+
+    @Test
+    fun `UIStateWrapper should render custom content for PartialSuccess state`() = runComposeUiTest {
+        // Given
+        data class ComplexData(val title: String, val count: Int)
+
+        val complexData = ComplexData("Test", 123)
+        val partialSuccessState = UIState.PartialSuccess(
+            data = complexData,
+            warnings = listOf("localhost:8080 - Failed")
+        )
+
+        // When
+        setContent {
+            UIStateWrapper(state = partialSuccessState) { data ->
+                Text(text = "${data.title}: ${data.count}")
+            }
+        }
+
+        // Then
+        onNodeWithText("Test: 123").assertIsDisplayed()
+        onNodeWithText("Partial Data Available").assertIsDisplayed()
+        onNodeWithText("• localhost:8080 - Failed").assertIsDisplayed()
+    }
+
+    @Test
+    fun `UIStateWrapper should handle PartialSuccess with empty warnings list`() = runComposeUiTest {
+        // Given
+        val partialSuccessState = UIState.PartialSuccess(
+            data = "Data",
+            warnings = emptyList()
+        )
+
+        // When
+        setContent {
+            UIStateWrapper(state = partialSuccessState) { data ->
+                Text(text = data)
+            }
+        }
+
+        // Then
+        onNodeWithText("Data").assertIsDisplayed()
+        onNodeWithText("Partial Data Available").assertIsDisplayed()
+    }
 }

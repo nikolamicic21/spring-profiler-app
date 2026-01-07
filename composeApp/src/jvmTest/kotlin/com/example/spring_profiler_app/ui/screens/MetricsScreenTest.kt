@@ -4,9 +4,9 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.runComposeUiTest
+import com.example.spring_profiler_app.data.AggregatedMetricsResponse
 import com.example.spring_profiler_app.data.Measurement
 import com.example.spring_profiler_app.data.Metric
-import com.example.spring_profiler_app.data.MetricsResponse
 import com.example.spring_profiler_app.data.UIState
 import kotlin.test.Test
 
@@ -16,11 +16,11 @@ class MetricsScreenTest {
     @Test
     fun `MetricsScreen should display loading state`() = runComposeUiTest {
         // Given
-        val metricsState: UIState<MetricsResponse> = UIState.Loading
+        val metricsState: UIState<AggregatedMetricsResponse> = UIState.Loading
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -36,11 +36,11 @@ class MetricsScreenTest {
     fun `MetricsScreen should display error state`() = runComposeUiTest {
         // Given
         val errorMessage = "Failed to fetch metrics data"
-        val metricsState: UIState<MetricsResponse> = UIState.Error(errorMessage)
+        val metricsState: UIState<AggregatedMetricsResponse> = UIState.Error(errorMessage)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -58,12 +58,16 @@ class MetricsScreenTest {
             measurements = emptyList(),
             unit = null
         )
-        val metricsResponse = MetricsResponse(listOf(metric))
+        val endpointMetrics = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(metric)
+        )
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpointMetrics))
         val metricsState = UIState.Success(metricsResponse)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -82,12 +86,16 @@ class MetricsScreenTest {
             measurements = emptyList(),
             unit = "bytes"
         )
-        val metricsResponse = MetricsResponse(listOf(metric))
+        val endpointMetrics = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(metric)
+        )
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpointMetrics))
         val metricsState = UIState.Success(metricsResponse)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -110,12 +118,16 @@ class MetricsScreenTest {
             measurements = measurements,
             unit = "bytes"
         )
-        val metricsResponse = MetricsResponse(listOf(metric))
+        val endpointMetrics = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(metric)
+        )
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpointMetrics))
         val metricsState = UIState.Success(metricsResponse)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -141,12 +153,16 @@ class MetricsScreenTest {
             measurements = measurements,
             unit = "seconds"
         )
-        val metricsResponse = MetricsResponse(listOf(metric))
+        val endpointMetrics = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(metric)
+        )
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpointMetrics))
         val metricsState = UIState.Success(metricsResponse)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -176,12 +192,16 @@ class MetricsScreenTest {
             measurements = listOf(Measurement("VALUE", 0.5)),
             unit = null
         )
-        val metricsResponse = MetricsResponse(listOf(metric1, metric2))
+        val endpointMetrics = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(metric1, metric2)
+        )
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpointMetrics))
         val metricsState = UIState.Success(metricsResponse)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -207,12 +227,16 @@ class MetricsScreenTest {
             measurements = listOf(Measurement("VALUE", 50.0)),
             unit = null
         )
-        val metricsResponse = MetricsResponse(listOf(metric1, metric2))
+        val endpointMetrics = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(metric1, metric2)
+        )
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpointMetrics))
         val metricsState = UIState.Success(metricsResponse)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -232,12 +256,16 @@ class MetricsScreenTest {
             measurements = listOf(Measurement("VALUE", 8.0)),
             unit = null
         )
-        val metricsResponse = MetricsResponse(listOf(metric))
+        val endpointMetrics = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(metric)
+        )
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpointMetrics))
         val metricsState = UIState.Success(metricsResponse)
 
         // When
         setContent {
-            MetricsScreen(
+            AggregatedMetricsScreen(
                 metricsState = metricsState,
                 refreshMetricsCallback = {}
             )
@@ -248,5 +276,153 @@ class MetricsScreenTest {
         onNodeWithText("cpu.count").assertIsDisplayed()
         onNodeWithText("VALUE").assertIsDisplayed()
         onNodeWithText("8").assertIsDisplayed()
+    }
+
+    @Test
+    fun `AggregatedMetricsScreen should display metrics from multiple endpoints`() = runComposeUiTest {
+        // Given
+        val endpoint1 = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "prod-server-1",
+            metrics = listOf(
+                Metric(
+                    name = "jvm.memory.used",
+                    measurements = listOf(Measurement("VALUE", 1024.0)),
+                    unit = "bytes"
+                )
+            )
+        )
+        val endpoint2 = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "prod-server-2",
+            metrics = listOf(
+                Metric(
+                    name = "jvm.memory.used",
+                    measurements = listOf(Measurement("VALUE", 2048.0)),
+                    unit = "bytes"
+                )
+            )
+        )
+        val endpoint3 = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "staging-server",
+            metrics = listOf(
+                Metric(
+                    name = "jvm.memory.used",
+                    measurements = listOf(Measurement("VALUE", 512.0)),
+                    unit = "bytes"
+                )
+            )
+        )
+
+        val metricsResponse = AggregatedMetricsResponse(
+            endpoints = listOf(endpoint1, endpoint2, endpoint3)
+        )
+        val metricsState = UIState.Success(metricsResponse)
+
+        // When
+        setContent {
+            AggregatedMetricsScreen(
+                metricsState = metricsState,
+                refreshMetricsCallback = {}
+            )
+        }
+
+        waitForIdle()
+
+        // Then
+        onNodeWithText("prod-server-1").assertIsDisplayed()
+        onNodeWithText("prod-server-2").assertIsDisplayed()
+        onNodeWithText("staging-server").assertIsDisplayed()
+    }
+
+    @Test
+    fun `AggregatedMetricsScreen should display different metrics across endpoints`() = runComposeUiTest {
+        // Given
+        val endpoint1 = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "api-server",
+            metrics = listOf(
+                Metric(
+                    name = "http.server.requests",
+                    measurements = listOf(Measurement("COUNT", 1000.0)),
+                    unit = null
+                ),
+                Metric(
+                    name = "jvm.memory.used",
+                    measurements = listOf(Measurement("VALUE", 1024.0)),
+                    unit = "bytes"
+                )
+            )
+        )
+        val endpoint2 = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "worker-server",
+            metrics = listOf(
+                Metric(
+                    name = "jvm.threads.live",
+                    measurements = listOf(Measurement("VALUE", 50.0)),
+                    unit = null
+                )
+            )
+        )
+
+        val metricsResponse = AggregatedMetricsResponse(
+            endpoints = listOf(endpoint1, endpoint2)
+        )
+        val metricsState = UIState.Success(metricsResponse)
+
+        // When
+        setContent {
+            AggregatedMetricsScreen(
+                metricsState = metricsState,
+                refreshMetricsCallback = {}
+            )
+        }
+
+        waitForIdle()
+
+        // Then
+        onNodeWithText("api-server").assertIsDisplayed()
+        onNodeWithText("worker-server").assertIsDisplayed()
+    }
+
+    @Test
+    fun `AggregatedMetricsScreen should group metrics by prefix for each endpoint`() = runComposeUiTest {
+        // Given
+        val endpoint = AggregatedMetricsResponse.EndpointMetrics(
+            endpoint = "localhost:8080",
+            metrics = listOf(
+                Metric(
+                    name = "jvm.memory.used",
+                    measurements = listOf(Measurement("VALUE", 1024.0)),
+                    unit = "bytes"
+                ),
+                Metric(
+                    name = "jvm.threads.live",
+                    measurements = listOf(Measurement("VALUE", 50.0)),
+                    unit = null
+                ),
+                Metric(
+                    name = "http.server.requests",
+                    measurements = listOf(Measurement("COUNT", 1000.0)),
+                    unit = null
+                )
+            )
+        )
+
+        val metricsResponse = AggregatedMetricsResponse(endpoints = listOf(endpoint))
+        val metricsState = UIState.Success(metricsResponse)
+
+        // When
+        setContent {
+            AggregatedMetricsScreen(
+                metricsState = metricsState,
+                refreshMetricsCallback = {}
+            )
+        }
+
+        waitForIdle()
+
+        // Then
+        onNodeWithText("localhost:8080").assertIsDisplayed()
+
+        onNodeWithText("JVM").assertIsDisplayed()
+        onNodeWithText("HTTP").assertIsDisplayed()
     }
 }

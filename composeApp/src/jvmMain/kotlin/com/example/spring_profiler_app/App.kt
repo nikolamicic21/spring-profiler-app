@@ -16,14 +16,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.spring_profiler_app.data.Server
-import com.example.spring_profiler_app.data.ServerState
-import com.example.spring_profiler_app.data.refreshHealthState
-import com.example.spring_profiler_app.data.refreshMetricsState
-import com.example.spring_profiler_app.data.refreshState
-import com.example.spring_profiler_app.ui.panels.AddServerForm
-import com.example.spring_profiler_app.ui.panels.ServerDetailsPanel
-import com.example.spring_profiler_app.ui.panels.ServerListPanel
+import com.example.spring_profiler_app.data.ServerGroup
+import com.example.spring_profiler_app.data.ServerGroupState
+import com.example.spring_profiler_app.data.refreshGroupHealthState
+import com.example.spring_profiler_app.data.refreshGroupMetricsState
+import com.example.spring_profiler_app.data.refreshGroupState
+import com.example.spring_profiler_app.ui.panels.AddServerGroupForm
+import com.example.spring_profiler_app.ui.panels.ServerGroupDetailsPanel
+import com.example.spring_profiler_app.ui.panels.ServerGroupListPanel
 import com.example.spring_profiler_app.ui.rememberDebouncedCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,22 +39,28 @@ fun App() {
             color = MaterialTheme.colorScheme.background
         ) {
             val repository = Repository.current
-            val servers = remember { mutableStateMapOf<Server, ServerState>() }
-            val currentServerKey = remember { mutableStateOf<Server?>(null) }
+            val serverGroups = remember { mutableStateMapOf<ServerGroup, ServerGroupState>() }
+            val currentGroupKey = remember { mutableStateOf<ServerGroup?>(null) }
             val scope = rememberCoroutineScope()
             val ioScope = remember(scope) {
                 CoroutineScope(scope.coroutineContext + Dispatchers.IO + SupervisorJob(scope.coroutineContext[Job]))
             }
 
             val refreshHealthCallback: suspend () -> Unit = {
-                currentServerKey.value?.let { server ->
-                    servers.refreshHealthState(server, repository, showLoadingOnRefresh = false)
+                currentGroupKey.value?.let { group ->
+                    val groupState = serverGroups[group] ?: return@let
+                    groupState.group.endpoints.forEach { server ->
+                        serverGroups.refreshGroupHealthState(group, server, repository, showLoadingOnRefresh = false)
+                    }
                 }
             }
 
             val refreshMetricsCallback: suspend () -> Unit = {
-                currentServerKey.value?.let { server ->
-                    servers.refreshMetricsState(server, repository, showLoadingOnRefresh = false)
+                currentGroupKey.value?.let { group ->
+                    val groupState = serverGroups[group] ?: return@let
+                    groupState.group.endpoints.forEach { server ->
+                        serverGroups.refreshGroupMetricsState(group, server, repository, showLoadingOnRefresh = false)
+                    }
                 }
             }
 
@@ -65,23 +71,23 @@ fun App() {
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
-                    val debouncedRefreshServer = rememberDebouncedCallback<Server>(
+                    val debouncedRefreshGroup = rememberDebouncedCallback<ServerGroup>(
                         debounceInterval = 1000L
-                    ) { server ->
-                        ioScope.launch { servers.refreshState(server, repository) }
+                    ) { group ->
+                        ioScope.launch { serverGroups.refreshGroupState(group, repository) }
                     }
 
-                    ServerListPanel(
-                        servers = servers,
-                        currentServerKey = currentServerKey.value,
-                        onAddServerClick = { currentServerKey.value = null },
-                        onServerSelect = { server -> currentServerKey.value = server },
-                        onRefreshServer = debouncedRefreshServer,
-                        onDeleteServer = { server ->
-                            if (currentServerKey.value == server) {
-                                currentServerKey.value = null
+                    ServerGroupListPanel(
+                        serverGroups = serverGroups,
+                        currentGroupKey = currentGroupKey.value,
+                        onAddGroupClick = { currentGroupKey.value = null },
+                        onGroupSelect = { group -> currentGroupKey.value = group },
+                        onRefreshGroup = debouncedRefreshGroup,
+                        onDeleteGroup = { group ->
+                            if (currentGroupKey.value == group) {
+                                currentGroupKey.value = null
                             }
-                            servers.remove(server)
+                            serverGroups.remove(group)
                         },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -98,21 +104,22 @@ fun App() {
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.surface)
                 ) {
-                    val currentServerState = currentServerKey.value?.let { servers[it] }
-                    if (currentServerState == null) {
-                        AddServerForm(
-                            servers = servers,
-                            onServerAdded = { newServer ->
+                    val currentGroupState = currentGroupKey.value?.let { serverGroups[it] }
+                    if (currentGroupState == null) {
+                        AddServerGroupForm(
+                            serverGroups = serverGroups,
+                            onServerGroupAdded = { newGroup ->
                                 ioScope.launch {
-                                    servers.refreshState(newServer, repository)
+                                    serverGroups.refreshGroupState(newGroup, repository)
                                 }
+                                currentGroupKey.value = newGroup
                             },
                             ioScope = ioScope,
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
-                        ServerDetailsPanel(
-                            serverState = currentServerState,
+                        ServerGroupDetailsPanel(
+                            groupState = currentGroupState,
                             refreshHealthCallback = refreshHealthCallback,
                             refreshMetricsCallback = refreshMetricsCallback,
                             modifier = Modifier.fillMaxSize()
