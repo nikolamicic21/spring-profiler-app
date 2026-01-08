@@ -1,5 +1,8 @@
 package com.example.spring_profiler_app.ui.panels
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
+import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,19 +19,32 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.example.spring_profiler_app.data.ServerGroup
 import com.example.spring_profiler_app.data.ServerGroupState
@@ -36,10 +52,12 @@ import com.example.spring_profiler_app.data.ServerGroupState
 @Composable
 fun ServerGroupListPanel(
     serverGroups: Map<ServerGroup, ServerGroupState>,
-    currentGroupKey: ServerGroup?,
+    currentGroup: ServerGroup?,
+    editingGroup: ServerGroup?,
     onAddGroupClick: () -> Unit,
     onGroupSelect: (ServerGroup) -> Unit,
     onRefreshGroup: (ServerGroup) -> Unit,
+    onEditGroup: (ServerGroup) -> Unit,
     onDeleteGroup: (ServerGroup) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -78,9 +96,10 @@ fun ServerGroupListPanel(
                 serverGroups.keys.toList().forEach { group ->
                     ServerGroupListItem(
                         group = group,
-                        isSelected = currentGroupKey == group,
+                        isSelected = currentGroup == group || editingGroup == group,
                         onSelect = { onGroupSelect(group) },
                         onRefresh = { onRefreshGroup(group) },
+                        onEdit = { onEditGroup(group) },
                         onDelete = { onDeleteGroup(group) },
                     )
                 }
@@ -93,12 +112,14 @@ fun ServerGroupListPanel(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ServerGroupListItem(
     group: ServerGroup,
     isSelected: Boolean,
     onSelect: () -> Unit,
     onRefresh: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val color = if (isSelected) {
@@ -107,22 +128,57 @@ private fun ServerGroupListItem(
         MaterialTheme.colorScheme.surfaceVariant
     }
 
+    var cardWidth by remember { mutableStateOf(0) }
+    val widthThreshold = 300
+    var showHamburgerMenu by remember(cardWidth) { mutableStateOf(cardWidth < widthThreshold) }
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Box(contentAlignment = Alignment.CenterStart) {
         Row(modifier = Modifier.padding(8.dp).fillMaxWidth()) {
             Box(modifier = Modifier.padding(2.dp).weight(0.7f)) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = color),
-                    modifier = Modifier.clickable(onClick = onSelect)
+                    modifier = Modifier
+                        .clickable(onClick = onSelect)
+                        .fillMaxWidth()
+                        .onSizeChanged { size ->
+                            cardWidth = size.width
+                        }
                 ) {
                     Row(
                         modifier = Modifier.padding(10.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Column {
-                            Text(
-                                text = group.name,
-                                fontWeight = FontWeight.Bold
-                            )
+                        Column(
+                            modifier = Modifier.weight(1f, fill = false)
+                        ) {
+                            TooltipArea(
+                                tooltip = {
+                                    Surface(
+                                        modifier = Modifier.shadow(4.dp),
+                                        color = MaterialTheme.colorScheme.surface,
+                                        shape = MaterialTheme.shapes.small
+                                    ) {
+                                        Text(
+                                            text = group.name,
+                                            modifier = Modifier.padding(8.dp),
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                },
+                                delayMillis = 600,
+                                tooltipPlacement = TooltipPlacement.CursorPoint(
+                                    offset = DpOffset(0.dp, 16.dp)
+                                )
+                            ) {
+                                Text(
+                                    text = group.name,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 verticalAlignment = Alignment.CenterVertically
@@ -133,8 +189,63 @@ private fun ServerGroupListItem(
                                 )
                             }
                         }
-                        Row {
-                            Column {
+
+                        if (showHamburgerMenu) {
+                            Box {
+                                IconButton(onClick = { menuExpanded = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.MoreVert,
+                                        contentDescription = "More actions",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Refresh") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Refresh,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            menuExpanded = false
+                                            onRefresh()
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Edit") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Edit,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            menuExpanded = false
+                                            onEdit()
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Delete") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            menuExpanded = false
+                                            onDelete()
+                                        }
+                                    )
+                                }
+                            }
+                        } else {
+                            Row {
                                 IconButton(onClick = onRefresh) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
@@ -142,8 +253,13 @@ private fun ServerGroupListItem(
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
-                            }
-                            Column {
+                                IconButton(onClick = onEdit) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit group",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                                 IconButton(onClick = onDelete) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
@@ -153,7 +269,6 @@ private fun ServerGroupListItem(
                                 }
                             }
                         }
-
                     }
                 }
             }

@@ -105,7 +105,10 @@ private fun ConfigPropsContent(configPropsResponse: AggregatedConfigPropsRespons
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         if (filteredProps.isEmpty()) {
-            EmptyState(message = "No configuration properties match your filters.")
+            EmptyState(
+                message = "No configuration properties match your filters.",
+                topPadding = filterBarHeightPx.dp
+            )
         } else {
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Adaptive(minSize = 450.dp),

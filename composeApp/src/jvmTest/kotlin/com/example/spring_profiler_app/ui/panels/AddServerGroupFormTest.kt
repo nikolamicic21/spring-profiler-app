@@ -565,6 +565,130 @@ class AddServerGroupFormTest {
         assertEquals("Multi-Instance", addedGroup.name)
     }
 
+    @Test
+    fun `EditServerGroupForm should prefill existing group data`() = runComposeUiTest {
+        // Given
+        val server = Server(Url("http://localhost:8080/actuator"))
+        val existingGroup = ServerGroup(name = "Production", endpoints = listOf(server))
+        val serverState = ServerState(
+            server = server,
+            beans = UIState.Loading,
+            health = UIState.Loading,
+            configProps = UIState.Loading,
+            metrics = UIState.Loading
+        )
+        val groupState = ServerGroupState(group = existingGroup, endpointStates = mapOf(server to serverState))
+        val serverGroups = mutableMapOf(existingGroup to groupState)
+        val mockClient = createMockClient(HttpStatusCode.OK)
+        val ioScope = CoroutineScope(testDispatcher + SupervisorJob())
+
+        // When
+        setContent {
+            CompositionLocalProvider(Client provides mockClient) {
+                EditServerGroupForm(
+                    serverGroups = serverGroups,
+                    existingGroup = existingGroup,
+                    onServerGroupUpdated = {},
+                    ioScope = ioScope
+                )
+            }
+        }
+
+        // Then
+        onNodeWithText("Edit Server Group").assertIsDisplayed()
+        onNodeWithText("Production", substring = true).assertIsDisplayed()
+        onNodeWithText("http://localhost:8080/actuator", substring = true).assertIsDisplayed()
+        onNodeWithText("Update Group").assertIsDisplayed()
+    }
+
+    @Test
+    fun `EditServerGroupForm should successfully update server group`() = runComposeUiTest {
+        // Given
+        val server = Server(Url("http://localhost:8080/actuator"))
+        val existingGroup = ServerGroup(name = "Production", endpoints = listOf(server))
+        val serverState = ServerState(
+            server = server,
+            beans = UIState.Loading,
+            health = UIState.Loading,
+            configProps = UIState.Loading,
+            metrics = UIState.Loading
+        )
+        val groupState = ServerGroupState(group = existingGroup, endpointStates = mapOf(server to serverState))
+        val serverGroups = mutableMapOf(existingGroup to groupState)
+        val mockClient = createMockClient(HttpStatusCode.OK)
+        val ioScope = CoroutineScope(testDispatcher + SupervisorJob())
+        var updatedGroup: ServerGroup? = null
+
+        // When
+        setContent {
+            CompositionLocalProvider(Client provides mockClient) {
+                EditServerGroupForm(
+                    serverGroups = serverGroups,
+                    existingGroup = existingGroup,
+                    onServerGroupUpdated = { updatedGroup = it },
+                    ioScope = ioScope
+                )
+            }
+        }
+
+        onNodeWithText("Group Name").performClick()
+        onNodeWithText("Group Name").performTextClearance()
+        onNodeWithText("Group Name").performTextInput("Production-Updated")
+        waitForIdle()
+
+        onNodeWithText("Update Group").performClick()
+        waitForIdle()
+
+        // Then
+        assertEquals(1, serverGroups.size)
+        val updatedGroupInMap = serverGroups.keys.first()
+        assertEquals("Production-Updated", updatedGroupInMap.name)
+        assertEquals(existingGroup.id, updatedGroupInMap.id)
+
+        assertNotNull(updatedGroup)
+        assertEquals("Production-Updated", updatedGroup.name)
+        assertEquals(existingGroup.id, updatedGroup.id)
+    }
+
+    @Test
+    fun `EditServerGroupForm should allow same name for same group`() = runComposeUiTest {
+        // Given
+        val server = Server(Url("http://localhost:8080/actuator"))
+        val existingGroup = ServerGroup(name = "Production", endpoints = listOf(server))
+        val serverState = ServerState(
+            server = server,
+            beans = UIState.Loading,
+            health = UIState.Loading,
+            configProps = UIState.Loading,
+            metrics = UIState.Loading
+        )
+        val groupState = ServerGroupState(group = existingGroup, endpointStates = mapOf(server to serverState))
+        val serverGroups = mutableMapOf(existingGroup to groupState)
+        val mockClient = createMockClient(HttpStatusCode.OK)
+        val ioScope = CoroutineScope(testDispatcher + SupervisorJob())
+        var updatedGroup: ServerGroup? = null
+
+        // When
+        setContent {
+            CompositionLocalProvider(Client provides mockClient) {
+                EditServerGroupForm(
+                    serverGroups = serverGroups,
+                    existingGroup = existingGroup,
+                    onServerGroupUpdated = { updatedGroup = it },
+                    ioScope = ioScope
+                )
+            }
+        }
+
+        onNodeWithText("Update Group").performClick()
+        waitForIdle()
+
+        // Then
+        assertNotNull(updatedGroup)
+        assertEquals("Production", updatedGroup.name)
+        onNodeWithText("A group with this name already exists").assertDoesNotExist()
+    }
+
     private fun createMockClient(statusCode: HttpStatusCode): HttpClient {
         val mockEngine = MockEngine { _ ->
             respond(

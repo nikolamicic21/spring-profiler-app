@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,10 +48,53 @@ fun AddServerGroupForm(
     ioScope: CoroutineScope,
     modifier: Modifier = Modifier
 ) {
+    ServerGroupForm(
+        serverGroups = serverGroups,
+        existingGroup = null,
+        onServerGroupSaved = onServerGroupAdded,
+        ioScope = ioScope,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun EditServerGroupForm(
+    serverGroups: MutableMap<ServerGroup, ServerGroupState>,
+    existingGroup: ServerGroup,
+    onServerGroupUpdated: (ServerGroup) -> Unit,
+    ioScope: CoroutineScope,
+    modifier: Modifier = Modifier
+) {
+    ServerGroupForm(
+        serverGroups = serverGroups,
+        existingGroup = existingGroup,
+        onServerGroupSaved = onServerGroupUpdated,
+        ioScope = ioScope,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ServerGroupForm(
+    serverGroups: MutableMap<ServerGroup, ServerGroupState>,
+    existingGroup: ServerGroup?,
+    onServerGroupSaved: (ServerGroup) -> Unit,
+    ioScope: CoroutineScope,
+    modifier: Modifier = Modifier
+) {
     Box(modifier = modifier) {
         val client = Client.current
-        var groupName by rememberSaveable { mutableStateOf("App") }
-        val endpointUrls = remember { mutableStateListOf("http://localhost:8080/actuator") }
+        val isEditMode by rememberSaveable(existingGroup) { mutableStateOf(existingGroup != null) }
+        var groupName by rememberSaveable(existingGroup) { mutableStateOf(existingGroup?.name ?: "App") }
+        val endpointUrls = rememberSaveable(existingGroup) {
+            mutableStateListOf<String>().apply {
+                if (existingGroup != null) {
+                    addAll(existingGroup.endpoints.map { it.url.toString() })
+                } else {
+                    add("http://localhost:8080/actuator")
+                }
+            }
+        }
         var errorMessage by rememberSaveable { mutableStateOf("") }
         var connecting by rememberSaveable { mutableStateOf(false) }
 
@@ -65,7 +107,7 @@ fun AddServerGroupForm(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Add Server Group",
+                text = if (isEditMode) "Edit Server Group" else "Add Server Group",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -152,7 +194,8 @@ fun AddServerGroupForm(
                             val servers = endpointUrlsSet.map { urlText ->
                                 Server(Url(urlText))
                             }
-                            if (serverGroups.keys.any { it.name == groupName }) {
+
+                            if (serverGroups.keys.any { it.name == groupName && it != existingGroup }) {
                                 errorMessage = "A group with this name already exists"
                                 return@launch
                             }
@@ -174,27 +217,57 @@ fun AddServerGroupForm(
                                 return@launch
                             }
 
-                            val newGroup = ServerGroup(
-                                name = groupName,
-                                endpoints = servers
-                            )
+                            if (isEditMode && existingGroup != null) {
+                                val oldGroupState = serverGroups.remove(existingGroup)
 
-                            val endpointStates = servers.associateWith { server ->
-                                ServerState(
-                                    server = server,
-                                    beans = UIState.Loading,
-                                    health = UIState.Loading,
-                                    configProps = UIState.Loading,
-                                    metrics = UIState.Loading
+                                val updatedGroup = ServerGroup(
+                                    id = existingGroup.id,
+                                    name = groupName,
+                                    endpoints = servers
                                 )
-                            }
-                            serverGroups[newGroup] = ServerGroupState(
-                                group = newGroup,
-                                endpointStates = endpointStates
-                            )
 
-                            onServerGroupAdded(newGroup)
-                            errorMessage = ""
+                                val endpointStates = servers.associateWith { server ->
+                                    oldGroupState?.endpointStates?.entries?.find {
+                                        it.key.url == server.url
+                                    }?.value ?: ServerState(
+                                        server = server,
+                                        beans = UIState.Loading,
+                                        health = UIState.Loading,
+                                        configProps = UIState.Loading,
+                                        metrics = UIState.Loading
+                                    )
+                                }
+
+                                serverGroups[updatedGroup] = ServerGroupState(
+                                    group = updatedGroup,
+                                    endpointStates = endpointStates
+                                )
+
+                                onServerGroupSaved(updatedGroup)
+                                errorMessage = ""
+                            } else {
+                                val newGroup = ServerGroup(
+                                    name = groupName,
+                                    endpoints = servers
+                                )
+
+                                val endpointStates = servers.associateWith { server ->
+                                    ServerState(
+                                        server = server,
+                                        beans = UIState.Loading,
+                                        health = UIState.Loading,
+                                        configProps = UIState.Loading,
+                                        metrics = UIState.Loading
+                                    )
+                                }
+                                serverGroups[newGroup] = ServerGroupState(
+                                    group = newGroup,
+                                    endpointStates = endpointStates
+                                )
+
+                                onServerGroupSaved(newGroup)
+                                errorMessage = ""
+                            }
                         } catch (e: Exception) {
                             errorMessage = "Error: ${e.message ?: "Invalid URL or connection failed"}"
                         } finally {
@@ -205,7 +278,7 @@ fun AddServerGroupForm(
                 enabled = groupName.isNotBlank() && endpointUrls.all { it.isNotBlank() } && !connecting,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Connect Group")
+                Text(if (isEditMode) "Update Group" else "Connect Group")
             }
         }
     }

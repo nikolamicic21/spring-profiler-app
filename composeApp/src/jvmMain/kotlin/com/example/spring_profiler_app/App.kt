@@ -22,6 +22,7 @@ import com.example.spring_profiler_app.data.refreshGroupHealthState
 import com.example.spring_profiler_app.data.refreshGroupMetricsState
 import com.example.spring_profiler_app.data.refreshGroupState
 import com.example.spring_profiler_app.ui.panels.AddServerGroupForm
+import com.example.spring_profiler_app.ui.panels.EditServerGroupForm
 import com.example.spring_profiler_app.ui.panels.ServerGroupDetailsPanel
 import com.example.spring_profiler_app.ui.panels.ServerGroupListPanel
 import com.example.spring_profiler_app.ui.rememberDebouncedCallback
@@ -40,14 +41,15 @@ fun App() {
         ) {
             val repository = Repository.current
             val serverGroups = remember { mutableStateMapOf<ServerGroup, ServerGroupState>() }
-            val currentGroupKey = remember { mutableStateOf<ServerGroup?>(null) }
+            val currentGroup = remember { mutableStateOf<ServerGroup?>(null) }
+            val editingGroup = remember { mutableStateOf<ServerGroup?>(null) }
             val scope = rememberCoroutineScope()
             val ioScope = remember(scope) {
                 CoroutineScope(scope.coroutineContext + Dispatchers.IO + SupervisorJob(scope.coroutineContext[Job]))
             }
 
             val refreshHealthCallback: suspend () -> Unit = {
-                currentGroupKey.value?.let { group ->
+                currentGroup.value?.let { group ->
                     val groupState = serverGroups[group] ?: return@let
                     groupState.group.endpoints.forEach { server ->
                         serverGroups.refreshGroupHealthState(group, server, repository, showLoadingOnRefresh = false)
@@ -56,7 +58,7 @@ fun App() {
             }
 
             val refreshMetricsCallback: suspend () -> Unit = {
-                currentGroupKey.value?.let { group ->
+                currentGroup.value?.let { group ->
                     val groupState = serverGroups[group] ?: return@let
                     groupState.group.endpoints.forEach { server ->
                         serverGroups.refreshGroupMetricsState(group, server, repository, showLoadingOnRefresh = false)
@@ -79,13 +81,27 @@ fun App() {
 
                     ServerGroupListPanel(
                         serverGroups = serverGroups,
-                        currentGroupKey = currentGroupKey.value,
-                        onAddGroupClick = { currentGroupKey.value = null },
-                        onGroupSelect = { group -> currentGroupKey.value = group },
+                        currentGroup = currentGroup.value,
+                        editingGroup = editingGroup.value,
+                        onAddGroupClick = {
+                            currentGroup.value = null
+                            editingGroup.value = null
+                        },
+                        onGroupSelect = { group ->
+                            currentGroup.value = group
+                            editingGroup.value = null
+                        },
                         onRefreshGroup = debouncedRefreshGroup,
+                        onEditGroup = { group ->
+                            editingGroup.value = group
+                            currentGroup.value = null
+                        },
                         onDeleteGroup = { group ->
-                            if (currentGroupKey.value == group) {
-                                currentGroupKey.value = null
+                            if (currentGroup.value == group) {
+                                currentGroup.value = null
+                            }
+                            if (editingGroup.value == group) {
+                                editingGroup.value = null
                             }
                             serverGroups.remove(group)
                         },
@@ -104,26 +120,48 @@ fun App() {
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.surface)
                 ) {
-                    val currentGroupState = currentGroupKey.value?.let { serverGroups[it] }
-                    if (currentGroupState == null) {
-                        AddServerGroupForm(
-                            serverGroups = serverGroups,
-                            onServerGroupAdded = { newGroup ->
-                                ioScope.launch {
-                                    serverGroups.refreshGroupState(newGroup, repository)
-                                }
-                                currentGroupKey.value = newGroup
-                            },
-                            ioScope = ioScope,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        ServerGroupDetailsPanel(
-                            groupState = currentGroupState,
-                            refreshHealthCallback = refreshHealthCallback,
-                            refreshMetricsCallback = refreshMetricsCallback,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                    val currentGroupState = currentGroup.value?.let { serverGroups[it] }
+                    val editingGroupValue = editingGroup.value
+
+                    when {
+                        editingGroupValue != null -> {
+                            EditServerGroupForm(
+                                serverGroups = serverGroups,
+                                existingGroup = editingGroupValue,
+                                onServerGroupUpdated = { updatedGroup ->
+                                    ioScope.launch {
+                                        serverGroups.refreshGroupState(updatedGroup, repository)
+                                    }
+                                    currentGroup.value = updatedGroup
+                                    editingGroup.value = null
+                                },
+                                ioScope = ioScope,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+
+                        currentGroupState == null -> {
+                            AddServerGroupForm(
+                                serverGroups = serverGroups,
+                                onServerGroupAdded = { newGroup ->
+                                    ioScope.launch {
+                                        serverGroups.refreshGroupState(newGroup, repository)
+                                    }
+                                    currentGroup.value = newGroup
+                                },
+                                ioScope = ioScope,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+
+                        else -> {
+                            ServerGroupDetailsPanel(
+                                groupState = currentGroupState,
+                                refreshHealthCallback = refreshHealthCallback,
+                                refreshMetricsCallback = refreshMetricsCallback,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }

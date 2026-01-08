@@ -111,7 +111,10 @@ private fun BeansContent(beansResponse: AggregatedBeansResponse) {
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         if (filteredBeans.isEmpty()) {
-            EmptyState(message = "No beans match your filters.")
+            EmptyState(
+                message = "No beans match your filters.",
+                topPadding = filterBarHeightPx.dp
+            )
         } else {
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Adaptive(minSize = 450.dp),
