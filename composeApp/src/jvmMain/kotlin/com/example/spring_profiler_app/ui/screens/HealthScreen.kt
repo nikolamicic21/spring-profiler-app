@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
@@ -27,7 +25,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,7 +40,9 @@ import androidx.compose.ui.unit.dp
 import com.example.spring_profiler_app.data.AggregatedHealthResponse
 import com.example.spring_profiler_app.data.UIState
 import com.example.spring_profiler_app.ui.components.AutoRefresh
+import com.example.spring_profiler_app.ui.components.FilterBarContainer
 import com.example.spring_profiler_app.ui.components.FilterChipGroup
+import com.example.spring_profiler_app.ui.components.StatusBadge
 import com.example.spring_profiler_app.ui.components.UIStateWrapper
 import kotlin.time.Duration.Companion.seconds
 
@@ -128,14 +127,7 @@ private fun HealthFilterBar(
     onEndpointSelect: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    FilterBarContainer(modifier = modifier) {
         FilterChipGroup(
             label = "Endpoint",
             options = endpoints,
@@ -166,28 +158,7 @@ fun EndpointHealthCard(endpointHealth: AggregatedHealthResponse.EndpointHealth) 
                     modifier = Modifier.weight(1f)
                 )
 
-                Surface(
-                    color = getStatusColor(endpointHealth.status).copy(alpha = 0.15f),
-                    shape = CircleShape
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(getStatusColor(endpointHealth.status), CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = endpointHealth.status,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = getStatusColor(endpointHealth.status)
-                        )
-                    }
-                }
+                StatusBadge(status = endpointHealth.status)
             }
 
             if (endpointHealth.components.isNotEmpty()) {
@@ -214,8 +185,6 @@ fun EndpointHealthCard(endpointHealth: AggregatedHealthResponse.EndpointHealth) 
 
 @Composable
 fun ComponentStatusRow(name: String, status: String) {
-    val statusColor = getStatusColor(status)
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -228,28 +197,7 @@ fun ComponentStatusRow(name: String, status: String) {
             modifier = Modifier.weight(1f)
         )
 
-        Surface(
-            color = statusColor.copy(alpha = 0.15f),
-            shape = CircleShape
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(statusColor, CircleShape)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = status,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = statusColor
-                )
-            }
-        }
+        StatusBadge(status = status, dotSize = 6.dp)
     }
 }
 
@@ -296,11 +244,4 @@ fun StatusIcon(status: String, modifier: Modifier = Modifier) {
         else -> Icons.Default.Info to Color.Gray
     }
     Icon(imageVector = icon, contentDescription = status, tint = color, modifier = modifier)
-}
-
-fun getStatusColor(status: String): Color = when (status.uppercase()) {
-    "UP" -> Color(0xFF2E7D32)
-    "DOWN" -> Color(0xFFD32F2F)
-    "OUT_OF_SERVICE" -> Color(0xFFED6C02)
-    else -> Color.Gray
 }

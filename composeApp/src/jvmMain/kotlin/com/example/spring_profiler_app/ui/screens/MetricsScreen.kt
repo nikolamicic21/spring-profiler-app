@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
@@ -48,6 +47,7 @@ import com.example.spring_profiler_app.data.Metric
 import com.example.spring_profiler_app.data.UIState
 import com.example.spring_profiler_app.data.formatNumberWithoutGrouping
 import com.example.spring_profiler_app.ui.components.AutoRefresh
+import com.example.spring_profiler_app.ui.components.FilterBarContainer
 import com.example.spring_profiler_app.ui.components.FilterChipGroup
 import com.example.spring_profiler_app.ui.components.UIStateWrapper
 import com.example.spring_profiler_app.ui.components.UnitBadge
@@ -148,14 +148,7 @@ private fun MetricsFilterBar(
     onEndpointSelect: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    FilterBarContainer(modifier = modifier) {
         FilterChipGroup(
             label = "Endpoint",
             options = endpoints,

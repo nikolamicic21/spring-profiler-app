@@ -60,8 +60,8 @@ class AggregationTest {
         assertIs<UIState.Success<AggregatedBeansResponse>>(result)
         val data = result.data
         assertEquals(2, data.endpoints.size)
-        assertEquals("localhost:8080", data.endpoints[0].endpoint)
-        assertEquals("localhost:8081", data.endpoints[1].endpoint)
+        assertEquals(server1.url.toString(), data.endpoints[0].endpoint)
+        assertEquals(server2.url.toString(), data.endpoints[1].endpoint)
         assertEquals(beans1.contexts, data.endpoints[0].contexts)
         assertEquals(beans2.contexts, data.endpoints[1].contexts)
     }
@@ -105,7 +105,7 @@ class AggregationTest {
         assertIs<UIState.PartialSuccess<AggregatedBeansResponse>>(result)
         val data = result.data
         assertEquals(1, data.endpoints.size)
-        assertEquals("localhost:8080", data.endpoints[0].endpoint)
+        assertEquals(server1.url.toString(), data.endpoints[0].endpoint)
 
         assertEquals(1, result.warnings.size)
         assertTrue(result.warnings[0].contains("localhost:8081"))
@@ -388,8 +388,8 @@ class AggregationTest {
         assertIs<UIState.Success<AggregatedConfigPropsResponse>>(result)
         val data = result.data
         assertEquals(2, data.endpoints.size)
-        assertEquals("localhost:8080", data.endpoints[0].endpoint)
-        assertEquals("localhost:8081", data.endpoints[1].endpoint)
+        assertEquals(server1.url.toString(), data.endpoints[0].endpoint)
+        assertEquals(server2.url.toString(), data.endpoints[1].endpoint)
         assertEquals(configProps1.contexts, data.endpoints[0].contexts)
         assertEquals(configProps2.contexts, data.endpoints[1].contexts)
     }
@@ -444,8 +444,8 @@ class AggregationTest {
         assertIs<UIState.Success<AggregatedMetricsResponse>>(result)
         val data = result.data
         assertEquals(2, data.endpoints.size)
-        assertEquals("localhost:8080", data.endpoints[0].endpoint)
-        assertEquals("localhost:8081", data.endpoints[1].endpoint)
+        assertEquals(server1.url.toString(), data.endpoints[0].endpoint)
+        assertEquals(server2.url.toString(), data.endpoints[1].endpoint)
         assertEquals(metrics1.metrics, data.endpoints[0].metrics)
         assertEquals(metrics2.metrics, data.endpoints[1].metrics)
     }
@@ -491,8 +491,8 @@ class AggregationTest {
         // Then
         assertIs<UIState.Success<AggregatedBeansResponse>>(result)
         val endpoints = result.data.endpoints
-        assertEquals("localhost:8080", endpoints[0].endpoint)
-        assertEquals("localhost:8081", endpoints[1].endpoint)
-        assertEquals("localhost:8082", endpoints[2].endpoint)
+        assertEquals(server1.url.toString(), endpoints[0].endpoint)
+        assertEquals(server2.url.toString(), endpoints[1].endpoint)
+        assertEquals(server3.url.toString(), endpoints[2].endpoint)
     }
 }

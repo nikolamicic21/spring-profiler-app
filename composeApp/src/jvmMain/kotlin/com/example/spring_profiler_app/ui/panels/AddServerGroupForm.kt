@@ -36,6 +36,7 @@ import com.example.spring_profiler_app.data.ServerGroup
 import com.example.spring_profiler_app.data.ServerGroupState
 import com.example.spring_profiler_app.data.ServerState
 import com.example.spring_profiler_app.data.UIState
+import io.ktor.client.HttpClient
 import io.ktor.client.request.url
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
@@ -180,94 +181,36 @@ private fun ServerGroupForm(
                         try {
                             connecting = true
 
-                            if (groupName.isBlank()) {
-                                errorMessage = "Please enter a group name"
+                            val validationResult = validateForm(
+                                groupName = groupName,
+                                endpointUrls = endpointUrls.toList(),
+                                serverGroups = serverGroups,
+                                existingGroup = existingGroup
+                            )
+
+                            if (validationResult is ValidationResult.Error) {
+                                errorMessage = validationResult.message
                                 return@launch
                             }
 
-                            val endpointUrlsSet = endpointUrls.toSet()
-                            if (endpointUrlsSet.any { it.isBlank() }) {
-                                errorMessage = "All endpoint URLs must be filled"
-                                return@launch
-                            }
+                            val servers = endpointUrls.toSet().map { Server(Url(it)) }
 
-                            val servers = endpointUrlsSet.map { urlText ->
-                                Server(Url(urlText))
-                            }
-
-                            if (serverGroups.keys.any { it.name == groupName && it != existingGroup }) {
-                                errorMessage = "A group with this name already exists"
-                                return@launch
-                            }
-
-                            val failedEndpoints = mutableListOf<String>()
-                            servers.forEach { server ->
-                                try {
-                                    safeRequest<Unit>(client) {
-                                        url(server.url)
-                                    }
-                                } catch (_: Exception) {
-                                    failedEndpoints.add(server.url.toString())
-                                }
-                            }
-
+                            val failedEndpoints = testEndpointConnectivity(servers, client)
                             if (failedEndpoints.isNotEmpty()) {
                                 errorMessage =
                                     "Failed to connect to actuator endpoint(s): ${failedEndpoints.joinToString(", ")}"
                                 return@launch
                             }
 
-                            if (isEditMode && existingGroup != null) {
-                                val oldGroupState = serverGroups.remove(existingGroup)
+                            val savedGroup = saveServerGroup(
+                                serverGroups = serverGroups,
+                                existingGroup = if (isEditMode) existingGroup else null,
+                                groupName = groupName,
+                                servers = servers
+                            )
 
-                                val updatedGroup = ServerGroup(
-                                    id = existingGroup.id,
-                                    name = groupName,
-                                    endpoints = servers
-                                )
-
-                                val endpointStates = servers.associateWith { server ->
-                                    oldGroupState?.endpointStates?.entries?.find {
-                                        it.key.url == server.url
-                                    }?.value ?: ServerState(
-                                        server = server,
-                                        beans = UIState.Loading,
-                                        health = UIState.Loading,
-                                        configProps = UIState.Loading,
-                                        metrics = UIState.Loading
-                                    )
-                                }
-
-                                serverGroups[updatedGroup] = ServerGroupState(
-                                    group = updatedGroup,
-                                    endpointStates = endpointStates
-                                )
-
-                                onServerGroupSaved(updatedGroup)
-                                errorMessage = ""
-                            } else {
-                                val newGroup = ServerGroup(
-                                    name = groupName,
-                                    endpoints = servers
-                                )
-
-                                val endpointStates = servers.associateWith { server ->
-                                    ServerState(
-                                        server = server,
-                                        beans = UIState.Loading,
-                                        health = UIState.Loading,
-                                        configProps = UIState.Loading,
-                                        metrics = UIState.Loading
-                                    )
-                                }
-                                serverGroups[newGroup] = ServerGroupState(
-                                    group = newGroup,
-                                    endpointStates = endpointStates
-                                )
-
-                                onServerGroupSaved(newGroup)
-                                errorMessage = ""
-                            }
+                            onServerGroupSaved(savedGroup)
+                            errorMessage = ""
                         } catch (e: Exception) {
                             errorMessage = "Error: ${e.message ?: "Invalid URL or connection failed"}"
                         } finally {
@@ -281,5 +224,102 @@ private fun ServerGroupForm(
                 Text(if (isEditMode) "Update Group" else "Connect Group")
             }
         }
+    }
+}
+
+private sealed class ValidationResult {
+    data object Success : ValidationResult()
+    data class Error(val message: String) : ValidationResult()
+}
+
+private fun validateForm(
+    groupName: String,
+    endpointUrls: List<String>,
+    serverGroups: Map<ServerGroup, ServerGroupState>,
+    existingGroup: ServerGroup?
+): ValidationResult {
+    if (groupName.isBlank()) {
+        return ValidationResult.Error("Please enter a group name")
+    }
+
+    if (endpointUrls.any { it.isBlank() }) {
+        return ValidationResult.Error("All endpoint URLs must be filled")
+    }
+
+    if (serverGroups.keys.any { it.name == groupName && it != existingGroup }) {
+        return ValidationResult.Error("A group with this name already exists")
+    }
+
+    return ValidationResult.Success
+}
+
+private suspend fun testEndpointConnectivity(
+    servers: List<Server>,
+    client: HttpClient
+): List<String> {
+    val failedEndpoints = mutableListOf<String>()
+    servers.forEach { server ->
+        try {
+            safeRequest<Unit>(client) {
+                url(server.url)
+            }
+        } catch (_: Exception) {
+            failedEndpoints.add(server.url.toString())
+        }
+    }
+    return failedEndpoints
+}
+
+private fun createLoadingServerState(server: Server) = ServerState(
+    server = server,
+    beans = UIState.Loading,
+    health = UIState.Loading,
+    configProps = UIState.Loading,
+    metrics = UIState.Loading
+)
+
+private fun saveServerGroup(
+    serverGroups: MutableMap<ServerGroup, ServerGroupState>,
+    existingGroup: ServerGroup?,
+    groupName: String,
+    servers: List<Server>
+): ServerGroup {
+    return if (existingGroup != null) {
+        val oldGroupState = serverGroups.remove(existingGroup)
+
+        val updatedGroup = ServerGroup(
+            id = existingGroup.id,
+            name = groupName,
+            endpoints = servers
+        )
+
+        val endpointStates = servers.associateWith { server ->
+            oldGroupState?.endpointStates?.entries?.find {
+                it.key.url == server.url
+            }?.value ?: createLoadingServerState(server)
+        }
+
+        serverGroups[updatedGroup] = ServerGroupState(
+            group = updatedGroup,
+            endpointStates = endpointStates
+        )
+
+        updatedGroup
+    } else {
+        val newGroup = ServerGroup(
+            name = groupName,
+            endpoints = servers
+        )
+
+        val endpointStates = servers.associateWith { server ->
+            createLoadingServerState(server)
+        }
+
+        serverGroups[newGroup] = ServerGroupState(
+            group = newGroup,
+            endpointStates = endpointStates
+        )
+
+        newGroup
     }
 }

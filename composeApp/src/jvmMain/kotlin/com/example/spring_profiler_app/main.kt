@@ -2,8 +2,13 @@ package com.example.spring_profiler_app
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import com.example.spring_profiler_app.data.ActuatorRepository
 import com.example.spring_profiler_app.data.ActuatorRepositoryImpl
 import io.ktor.client.HttpClient
@@ -21,6 +26,11 @@ val Repository = compositionLocalOf<ActuatorRepository> {
 }
 
 fun main() = application {
+    val windowState = rememberWindowState(
+        size = DpSize(1200.dp, 800.dp),
+        position = WindowPosition(Alignment.Center)
+    )
+
     val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
@@ -36,6 +46,7 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "Spring Profiler",
+        state = windowState
     ) {
         CompositionLocalProvider(
             Client provides client,

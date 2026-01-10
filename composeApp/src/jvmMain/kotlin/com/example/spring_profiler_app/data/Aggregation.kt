@@ -28,12 +28,12 @@ private fun <T, R> aggregateEndpointData(
                 if (errors.isNotEmpty()) {
                     errors.forEach { (server, state) ->
                         val errorMsg = (state as UIState.Error).message
-                        add("${server.url.host}:${server.url.port} - $errorMsg")
+                        add("${server.url} - $errorMsg")
                     }
                 }
                 if (loading.isNotEmpty()) {
                     loading.forEach { (server, _) ->
-                        add("${server.url.host}:${server.url.port} - Still loading...")
+                        add("${server.url} - Still loading...")
                     }
                 }
             }
@@ -47,7 +47,7 @@ private fun <T, R> aggregateEndpointData(
 
         errors.size == states.size -> {
             val errorMessages = errors.joinToString("\n") { (server, state) ->
-                "• ${server.url.host}:${server.url.port}: ${(state as UIState.Error).message}"
+                "• ${server.url}: ${(state as UIState.Error).message}"
             }
             UIState.Error("All endpoints failed:\n$errorMessages")
         }
@@ -62,10 +62,8 @@ fun ServerGroupState.getAggregatedBeans(): UIState<AggregatedBeansResponse> {
         extractData = { it.beans },
         merge = { successfulResponses ->
             val endpoints = successfulResponses.map { (server, beansResponse) ->
-                val endpointName = "${server.url.host}:${server.url.port}"
-
                 AggregatedBeansResponse.EndpointBeans(
-                    endpoint = endpointName,
+                    endpoint = server.url.toString(),
                     contexts = beansResponse.contexts
                 )
             }.sortedBy { it.endpoint }
@@ -87,12 +85,10 @@ fun ServerGroupState.getAggregatedHealth(): UIState<AggregatedHealthResponse> {
             }
 
             val endpoints = successfulResponses.map { (server, healthResponse) ->
-                val endpointName = "${server.url.host}:${server.url.port}"
-
                 val components = healthResponse.components?.mapValues { it.value.status } ?: emptyMap()
 
                 AggregatedHealthResponse.EndpointHealth(
-                    endpoint = endpointName,
+                    endpoint = server.url.toString(),
                     status = healthResponse.status,
                     components = components
                 )
@@ -112,10 +108,8 @@ fun ServerGroupState.getAggregatedConfigProps(): UIState<AggregatedConfigPropsRe
         extractData = { it.configProps },
         merge = { successfulResponses ->
             val endpoints = successfulResponses.map { (server, configPropsResponse) ->
-                val endpointName = "${server.url.host}:${server.url.port}"
-
                 AggregatedConfigPropsResponse.EndpointConfigProps(
-                    endpoint = endpointName,
+                    endpoint = server.url.toString(),
                     contexts = configPropsResponse.contexts
                 )
             }.sortedBy { it.endpoint }
@@ -131,10 +125,8 @@ fun ServerGroupState.getAggregatedMetrics(): UIState<AggregatedMetricsResponse> 
         extractData = { it.metrics },
         merge = { successfulResponses ->
             val endpoints = successfulResponses.map { (server, metricsResponse) ->
-                val endpointName = "${server.url.host}:${server.url.port}"
-
                 AggregatedMetricsResponse.EndpointMetrics(
-                    endpoint = endpointName,
+                    endpoint = server.url.toString(),
                     metrics = metricsResponse.metrics
                 )
             }.sortedBy { it.endpoint }

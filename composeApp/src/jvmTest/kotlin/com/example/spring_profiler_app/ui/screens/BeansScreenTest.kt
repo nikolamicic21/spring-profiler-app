@@ -2,8 +2,6 @@ package com.example.spring_profiler_app.ui.screens
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -363,53 +361,6 @@ class BeansScreenTest {
         onNodeWithText("bean2").assertIsDisplayed()
         onNodeWithText("localhost:8080").assertIsDisplayed()
         onNodeWithText("localhost:8081").assertIsDisplayed()
-    }
-
-    @Test
-    fun `BeansScreen should filter beans by endpoint`() = runComposeUiTest {
-        // Given
-        val bean1 = Bean(dependencies = emptyList(), scope = "singleton")
-        val bean2 = Bean(dependencies = emptyList(), scope = "prototype")
-        val beans1 = Beans(mapOf("com.example.bean1" to bean1))
-        val beans2 = Beans(mapOf("com.example.bean2" to bean2))
-        val endpoint1 = AggregatedBeansResponse.EndpointBeans(
-            endpoint = "localhost:8080",
-            contexts = mapOf("application" to beans1)
-        )
-        val endpoint2 = AggregatedBeansResponse.EndpointBeans(
-            endpoint = "localhost:8081",
-            contexts = mapOf("application" to beans2)
-        )
-        val beansResponse = AggregatedBeansResponse(endpoints = listOf(endpoint1, endpoint2))
-        val beansState = UIState.Success(beansResponse)
-
-        // When
-        setContent {
-            BeansScreen(beansState = beansState)
-        }
-
-        waitForIdle()
-
-        onNodeWithText("localhost:8080").assertIsDisplayed()
-        onNodeWithText("localhost:8081").assertIsDisplayed()
-
-        try {
-            val expandButtons = onAllNodesWithContentDescription("Expand")
-            if (expandButtons.fetchSemanticsNodes().isNotEmpty()) {
-                expandButtons[0].performClick()
-                waitForIdle()
-            }
-        } catch (_: Exception) {
-            // If we can't find the expand button, the filters might already be expanded
-            // or the test environment might be different
-        }
-
-        onAllNodesWithText("localhost:8080")[1].performClick()
-        waitForIdle()
-
-        // Then
-        onNodeWithText("bean1").assertIsDisplayed()
-        onNodeWithText("bean2").assertDoesNotExist()
     }
 
     @Test

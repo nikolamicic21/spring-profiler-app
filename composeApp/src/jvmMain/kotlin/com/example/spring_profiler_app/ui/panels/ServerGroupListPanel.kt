@@ -190,88 +190,122 @@ private fun ServerGroupListItem(
                             }
                         }
 
-                        if (showHamburgerMenu) {
-                            Box {
-                                IconButton(onClick = { menuExpanded = true }) {
-                                    Icon(
-                                        imageVector = Icons.Default.MoreVert,
-                                        contentDescription = "More actions",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = { menuExpanded = false }
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Refresh") },
-                                        leadingIcon = {
-                                            Icon(
-                                                imageVector = Icons.Default.Refresh,
-                                                contentDescription = null
-                                            )
-                                        },
-                                        onClick = {
-                                            menuExpanded = false
-                                            onRefresh()
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Edit") },
-                                        leadingIcon = {
-                                            Icon(
-                                                imageVector = Icons.Default.Edit,
-                                                contentDescription = null
-                                            )
-                                        },
-                                        onClick = {
-                                            menuExpanded = false
-                                            onEdit()
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Delete") },
-                                        leadingIcon = {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = null
-                                            )
-                                        },
-                                        onClick = {
-                                            menuExpanded = false
-                                            onDelete()
-                                        }
-                                    )
-                                }
-                            }
-                        } else {
-                            Row {
-                                IconButton(onClick = onRefresh) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = "Refresh data",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                IconButton(onClick = onEdit) {
-                                    Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = "Edit group",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                IconButton(onClick = onDelete) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Delete group",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
-                        }
+                        ServerGroupActions(
+                            showHamburgerMenu = showHamburgerMenu,
+                            menuExpanded = menuExpanded,
+                            onMenuExpandedChange = { menuExpanded = it },
+                            onRefresh = onRefresh,
+                            onEdit = onEdit,
+                            onDelete = onDelete
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ServerGroupActions(
+    showHamburgerMenu: Boolean,
+    menuExpanded: Boolean,
+    onMenuExpandedChange: (Boolean) -> Unit,
+    onRefresh: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    if (showHamburgerMenu) {
+        ServerGroupDropdownMenu(
+            expanded = menuExpanded,
+            onExpandedChange = onMenuExpandedChange,
+            onRefresh = onRefresh,
+            onEdit = onEdit,
+            onDelete = onDelete
+        )
+    } else {
+        ServerGroupActionButtons(
+            onRefresh = onRefresh,
+            onEdit = onEdit,
+            onDelete = onDelete
+        )
+    }
+}
+
+@Composable
+private fun ServerGroupDropdownMenu(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onRefresh: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Box {
+        IconButton(onClick = { onExpandedChange(true) }) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More actions",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { onExpandedChange(false) }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Refresh") },
+                leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) },
+                onClick = {
+                    onExpandedChange(false)
+                    onRefresh()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Edit") },
+                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                onClick = {
+                    onExpandedChange(false)
+                    onEdit()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Delete") },
+                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                onClick = {
+                    onExpandedChange(false)
+                    onDelete()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ServerGroupActionButtons(
+    onRefresh: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Row {
+        IconButton(onClick = onRefresh) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Refresh data",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        IconButton(onClick = onEdit) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit group",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete group",
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
