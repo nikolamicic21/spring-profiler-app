@@ -37,16 +37,17 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FilterChipGroup(
+fun <T> FilterChipGroup(
     label: String,
-    options: List<String>,
-    selectedOption: String?,
-    onOptionSelect: (String?) -> Unit,
+    options: List<T>,
+    selectedOption: T?,
+    onOptionSelect: (T?) -> Unit,
+    optionLabel: (T) -> String,
     modifier: Modifier = Modifier,
     collapsible: Boolean = false,
     initiallyExpanded: Boolean = false
 ) {
-    var isExpanded by remember { mutableStateOf(if (collapsible) initiallyExpanded else true) }
+    var isExpanded by remember { mutableStateOf(!collapsible || initiallyExpanded) }
 
     Column(modifier = modifier) {
         Row(
@@ -109,7 +110,7 @@ fun FilterChipGroup(
                             onClick = {
                                 onOptionSelect(if (selectedOption == option) null else option)
                             },
-                            label = { Text(option) },
+                            label = { Text(optionLabel(option)) },
                             elevation = FilterChipDefaults.filterChipElevation(
                                 elevation = 0.dp,
                                 pressedElevation = 0.dp,

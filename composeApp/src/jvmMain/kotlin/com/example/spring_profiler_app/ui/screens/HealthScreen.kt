@@ -133,6 +133,7 @@ private fun HealthFilterBar(
             options = endpoints,
             selectedOption = selectedEndpoint,
             onOptionSelect = onEndpointSelect,
+            optionLabel = { it },
             collapsible = true,
         )
     }

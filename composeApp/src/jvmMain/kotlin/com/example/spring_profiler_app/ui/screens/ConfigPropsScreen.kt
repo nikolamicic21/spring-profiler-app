@@ -32,21 +32,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.spring_profiler_app.data.AggregatedConfigPropsResponse
+import com.example.spring_profiler_app.data.ContextEndpointItem
+import com.example.spring_profiler_app.data.ContextFilterOption
 import com.example.spring_profiler_app.data.UIState
+import com.example.spring_profiler_app.data.buildContextFilterOptions
 import com.example.spring_profiler_app.data.flattenConfigPropsObject
+import com.example.spring_profiler_app.data.matches
 import com.example.spring_profiler_app.ui.components.EndpointContextBadges
 import com.example.spring_profiler_app.ui.components.FilterBarContainer
 import com.example.spring_profiler_app.ui.components.FilterChipGroup
 import com.example.spring_profiler_app.ui.components.FilterableScreenLayout
 import com.example.spring_profiler_app.ui.components.SearchBar
 import com.example.spring_profiler_app.ui.components.UIStateWrapper
-
-data class ConfigPropsItem(
-    val prefix: String,
-    val props: Map<String, String>,
-    val context: String,
-    val endpoint: String
-)
 
 @Composable
 fun ConfigPropsScreen(configPropsState: UIState<AggregatedConfigPropsResponse>) {
@@ -77,17 +74,18 @@ private fun ConfigPropsContent(configPropsResponse: AggregatedConfigPropsRespons
         }
     }
 
-    val allContexts = remember(allConfigProps) {
-        allConfigProps.map { it.context }.distinct().sorted()
+    val contextFilterOptions = remember(allConfigProps) {
+        allConfigProps.buildContextFilterOptions()
     }
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedContext by remember { mutableStateOf<String?>(null) }
+    var selectedContextOption by remember { mutableStateOf<ContextFilterOption?>(null) }
 
-    val filteredProps = remember(searchQuery, selectedContext, allConfigProps) {
+    val filteredProps = remember(searchQuery, selectedContextOption, allConfigProps) {
+        val contextFilter = selectedContextOption
         allConfigProps.filter {
             val matchesSearch = it.prefix.contains(searchQuery, ignoreCase = true)
-            val matchesContext = selectedContext == null || it.context == selectedContext
+            val matchesContext = contextFilter == null || contextFilter.matches(it)
             matchesSearch && matchesContext
         }.filter { it.props.isNotEmpty() }
     }
@@ -99,9 +97,9 @@ private fun ConfigPropsContent(configPropsResponse: AggregatedConfigPropsRespons
             ConfigPropsFilterBar(
                 searchQuery = searchQuery,
                 onSearchChange = { searchQuery = it },
-                contexts = allContexts,
-                selectedContext = selectedContext,
-                onContextSelect = { selectedContext = it }
+                contextOptions = contextFilterOptions,
+                selectedContextOption = selectedContextOption,
+                onContextSelect = { selectedContextOption = it }
             )
         }
     ) { filterBarHeight ->
@@ -128,9 +126,9 @@ private fun ConfigPropsContent(configPropsResponse: AggregatedConfigPropsRespons
 private fun ConfigPropsFilterBar(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
-    contexts: List<String>,
-    selectedContext: String?,
-    onContextSelect: (String?) -> Unit
+    contextOptions: List<ContextFilterOption>,
+    selectedContextOption: ContextFilterOption?,
+    onContextSelect: (ContextFilterOption?) -> Unit
 ) {
     FilterBarContainer {
         SearchBar(
@@ -141,9 +139,10 @@ private fun ConfigPropsFilterBar(
 
         FilterChipGroup(
             label = "Context",
-            options = contexts,
-            selectedOption = selectedContext,
+            options = contextOptions,
+            selectedOption = selectedContextOption,
             onOptionSelect = onContextSelect,
+            optionLabel = { it.displayLabel },
             collapsible = true,
         )
     }
@@ -212,3 +211,10 @@ fun PropertyRow(keyExtension: String, propertyValue: String) {
         }
     }
 }
+
+data class ConfigPropsItem(
+    val prefix: String,
+    val props: Map<String, String>,
+    override val context: String,
+    override val endpoint: String
+) : ContextEndpointItem

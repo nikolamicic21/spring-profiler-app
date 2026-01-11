@@ -33,7 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.spring_profiler_app.data.AggregatedBeansResponse
 import com.example.spring_profiler_app.data.Bean
+import com.example.spring_profiler_app.data.ContextEndpointItem
+import com.example.spring_profiler_app.data.ContextFilterOption
 import com.example.spring_profiler_app.data.UIState
+import com.example.spring_profiler_app.data.buildContextFilterOptions
+import com.example.spring_profiler_app.data.matches
 import com.example.spring_profiler_app.ui.components.AppTooltip
 import com.example.spring_profiler_app.ui.components.EndpointContextBadges
 import com.example.spring_profiler_app.ui.components.FilterBarContainer
@@ -42,13 +46,6 @@ import com.example.spring_profiler_app.ui.components.FilterableScreenLayout
 import com.example.spring_profiler_app.ui.components.ScopeBadge
 import com.example.spring_profiler_app.ui.components.SearchBar
 import com.example.spring_profiler_app.ui.components.UIStateWrapper
-
-data class BeanItem(
-    val name: String,
-    val bean: Bean,
-    val context: String,
-    val endpoint: String
-)
 
 @Composable
 fun BeansScreen(beansState: UIState<AggregatedBeansResponse>) {
@@ -77,23 +74,24 @@ private fun BeansContent(beansResponse: AggregatedBeansResponse) {
         }
     }
 
-    val allContexts = remember(allBeans) {
-        allBeans.map { it.context }.distinct().sorted()
+    val contextFilterOptions = remember(allBeans) {
+        allBeans.buildContextFilterOptions()
     }
 
-    val allScopes = remember(allBeans) {
+    val scopeFilterOptions = remember(allBeans) {
         allBeans.map { it.bean.scope }.distinct().sorted()
     }
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedContext by remember { mutableStateOf<String?>(null) }
-    var selectedScope by remember { mutableStateOf<String?>(null) }
+    var selectedContextOption by remember { mutableStateOf<ContextFilterOption?>(null) }
+    var selectedScopeOption by remember { mutableStateOf<String?>(null) }
 
-    val filteredBeans = remember(searchQuery, selectedContext, selectedScope, allBeans) {
+    val filteredBeans = remember(searchQuery, selectedContextOption, selectedScopeOption, allBeans) {
+        val contextFilter = selectedContextOption
         allBeans.filter { beanItem ->
             val matchesSearch = beanItem.name.contains(searchQuery, ignoreCase = true)
-            val matchesContext = selectedContext == null || beanItem.context == selectedContext
-            val matchesScope = selectedScope == null || beanItem.bean.scope == selectedScope
+            val matchesContext = contextFilter == null || contextFilter.matches(beanItem)
+            val matchesScope = selectedScopeOption == null || beanItem.bean.scope == selectedScopeOption
             matchesSearch && matchesContext && matchesScope
         }
     }
@@ -105,12 +103,12 @@ private fun BeansContent(beansResponse: AggregatedBeansResponse) {
             BeansFilterBar(
                 searchQuery = searchQuery,
                 onSearchChange = { searchQuery = it },
-                contexts = allContexts,
-                selectedContext = selectedContext,
-                onContextSelect = { selectedContext = it },
-                scopes = allScopes,
-                selectedScope = selectedScope,
-                onScopeSelect = { selectedScope = it }
+                contextOptions = contextFilterOptions,
+                selectedContextOption = selectedContextOption,
+                onContextSelect = { selectedContextOption = it },
+                scopes = scopeFilterOptions,
+                selectedScope = selectedScopeOption,
+                onScopeSelect = { selectedScopeOption = it }
             )
         }
     ) { filterBarHeight ->
@@ -129,8 +127,8 @@ private fun BeansContent(beansResponse: AggregatedBeansResponse) {
                     beanItem = beanItem,
                     onDependencyClick = { depName ->
                         searchQuery = depName
-                        selectedScope = null
-                        selectedContext = beanItem.context
+                        selectedScopeOption = null
+                        selectedContextOption = contextFilterOptions.find { it.matches(beanItem) }
                     }
                 )
             }
@@ -142,9 +140,9 @@ private fun BeansContent(beansResponse: AggregatedBeansResponse) {
 private fun BeansFilterBar(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
-    contexts: List<String>,
-    selectedContext: String?,
-    onContextSelect: (String?) -> Unit,
+    contextOptions: List<ContextFilterOption>,
+    selectedContextOption: ContextFilterOption?,
+    onContextSelect: (ContextFilterOption?) -> Unit,
     scopes: List<String>,
     selectedScope: String?,
     onScopeSelect: (String?) -> Unit
@@ -158,9 +156,10 @@ private fun BeansFilterBar(
 
         FilterChipGroup(
             label = "Context",
-            options = contexts,
-            selectedOption = selectedContext,
+            options = contextOptions,
+            selectedOption = selectedContextOption,
             onOptionSelect = onContextSelect,
+            optionLabel = { it.displayLabel },
             modifier = Modifier.fillMaxWidth(),
             collapsible = true,
         )
@@ -170,6 +169,7 @@ private fun BeansFilterBar(
             options = scopes,
             selectedOption = selectedScope,
             onOptionSelect = onScopeSelect,
+            optionLabel = { it },
             modifier = Modifier.fillMaxWidth(),
             collapsible = true,
         )
@@ -275,3 +275,10 @@ fun DependencyTag(depName: String, onClick: (String) -> Unit) {
         }
     }
 }
+
+data class BeanItem(
+    val name: String,
+    val bean: Bean,
+    override val context: String,
+    override val endpoint: String
+) : ContextEndpointItem

@@ -24,7 +24,8 @@ class FilterComponentsTest {
                 label = "Filter by Status",
                 options = listOf("Active", "Inactive"),
                 selectedOption = null,
-                onOptionSelect = {}
+                onOptionSelect = {},
+                optionLabel = { it },
             )
         }
 
@@ -40,7 +41,8 @@ class FilterComponentsTest {
                 label = "Filter",
                 options = listOf("Option1", "Option2", "Option3"),
                 selectedOption = null,
-                onOptionSelect = {}
+                onOptionSelect = {},
+                optionLabel = { it },
             )
         }
 
@@ -60,6 +62,7 @@ class FilterComponentsTest {
                 options = listOf("Option1", "Option2"),
                 selectedOption = null,
                 onOptionSelect = {},
+                optionLabel = { it },
                 initiallyExpanded = true
             )
         }
@@ -79,6 +82,7 @@ class FilterComponentsTest {
                 options = listOf("Option1", "Option2"),
                 selectedOption = "Option1",
                 onOptionSelect = {},
+                optionLabel = { it },
                 initiallyExpanded = true
             )
         }
@@ -101,6 +105,7 @@ class FilterComponentsTest {
                 options = listOf("Option1", "Option2"),
                 selectedOption = selectedOption,
                 onOptionSelect = { selectedOption = it },
+                optionLabel = { it },
                 initiallyExpanded = true
             )
         }
@@ -125,6 +130,7 @@ class FilterComponentsTest {
                 options = listOf("Option1", "Option2"),
                 selectedOption = selectedOption,
                 onOptionSelect = { selectedOption = it },
+                optionLabel = { it },
                 initiallyExpanded = true
             )
         }
@@ -149,6 +155,7 @@ class FilterComponentsTest {
                 options = listOf("Option1", "Option2"),
                 selectedOption = selectedOption,
                 onOptionSelect = { selectedOption = it },
+                optionLabel = { it },
                 initiallyExpanded = true
             )
         }
@@ -171,6 +178,7 @@ class FilterComponentsTest {
                 selectedOption = null,
                 onOptionSelect = {},
                 collapsible = true,
+                optionLabel = { it },
                 initiallyExpanded = false
             )
         }
@@ -192,6 +200,7 @@ class FilterComponentsTest {
                 selectedOption = null,
                 onOptionSelect = {},
                 collapsible = true,
+                optionLabel = { it },
                 initiallyExpanded = false
             )
         }
@@ -216,6 +225,7 @@ class FilterComponentsTest {
                 selectedOption = null,
                 onOptionSelect = {},
                 collapsible = true,
+                optionLabel = { it },
                 initiallyExpanded = true
             )
         }
@@ -239,6 +249,7 @@ class FilterComponentsTest {
                 selectedOption = null,
                 onOptionSelect = {},
                 collapsible = true,
+                optionLabel = { it },
                 initiallyExpanded = true
             )
         }
@@ -259,6 +270,7 @@ class FilterComponentsTest {
                 options = listOf("Option1", "Option2"),
                 selectedOption = null,
                 onOptionSelect = {},
+                optionLabel = { it },
                 collapsible = false
             )
         }

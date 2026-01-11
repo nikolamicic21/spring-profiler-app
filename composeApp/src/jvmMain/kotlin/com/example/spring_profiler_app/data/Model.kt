@@ -174,3 +174,44 @@ data class AggregatedMetricsResponse(
         val metrics: List<Metric>,
     )
 }
+
+interface ContextEndpointItem {
+    val context: String
+    val endpoint: String
+}
+
+data class ContextFilterOption(
+    val context: String,
+    val endpoint: String?,
+    val displayLabel: String
+)
+
+fun ContextFilterOption.matches(item: ContextEndpointItem): Boolean {
+    return if (endpoint != null) {
+        item.context == context && item.endpoint == endpoint
+    } else {
+        item.context == context
+    }
+}
+
+fun List<ContextEndpointItem>.buildContextFilterOptions(): List<ContextFilterOption> {
+    val contextToEndpoints = this.groupBy { it.context }
+        .mapValues { (_, groupedByContextItems) -> groupedByContextItems.map { it.endpoint }.distinct() }
+
+    return this.map { item ->
+        val endpointsForContext = contextToEndpoints[item.context] ?: emptyList()
+        if (endpointsForContext.size > 1) {
+            ContextFilterOption(
+                context = item.context,
+                endpoint = item.endpoint,
+                displayLabel = "${item.context}@${item.endpoint}"
+            )
+        } else {
+            ContextFilterOption(
+                context = item.context,
+                endpoint = null,
+                displayLabel = item.context
+            )
+        }
+    }.distinctBy { it.displayLabel }.sortedBy { it.displayLabel }
+}

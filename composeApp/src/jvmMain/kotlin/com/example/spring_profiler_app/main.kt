@@ -27,8 +27,8 @@ val Repository = compositionLocalOf<ActuatorRepository> {
 
 fun main() = application {
     val windowState = rememberWindowState(
-        size = DpSize(1200.dp, 800.dp),
-        position = WindowPosition(Alignment.Center)
+        size = DpSize(1600.dp, 1200.dp),
+        position = WindowPosition(Alignment.Center),
     )
 
     val client = HttpClient(CIO) {
